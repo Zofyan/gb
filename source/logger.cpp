@@ -28,13 +28,13 @@ Logger::Logger(registers *registers, Cpu *cpu, bool enable){
         if(!enable) return;
         uint8_t temp;
         uint16_t temp2;
-        cpu->bus->read(*cpu->registers.PC, &temp);
-        cpu->bus->read(*cpu->registers.PC + 1, (uint8_t*)&temp2);
-        cpu->bus->read(*cpu->registers.PC + 2, ((uint8_t*)&temp2) + 1);
+        cpu->bus->read(*cpu->registers1.PC, &temp);
+        cpu->bus->read(*cpu->registers1.PC + 1, (uint8_t*)&temp2);
+        cpu->bus->read(*cpu->registers1.PC + 2, ((uint8_t*)&temp2) + 1);
         printf("\033[0;31m");
         printf("DEBUG: INSTRUCTION:    instruction %02X - address %04X - next 2 bytes %04X\n",
                temp,
-               *cpu->registers.PC,
+               *cpu->registers1.PC,
                temp2
         );
         printf("\033[0m");
@@ -64,5 +64,23 @@ void Logger::print(const char *format, ...) {
     va_list args;
     va_start(args, format);
     vprintf(format, args);
+}
+
+void Logger::annas_log(FILE *log) {
+    uint8_t temp1, temp2, temp3;
+    cpu->bus->read(*cpu->registers1.PC, &temp1);
+    cpu->bus->read(*cpu->registers1.PC + 1, &temp2);
+    cpu->bus->read(*cpu->registers1.PC + 2, &temp3);
+    fprintf(
+            log,
+            "%04X: (%02X %02X %02X) AF: %04X, BC: %04X, DE: %04X, HL: %04X, SP:%04X\n",
+            *cpu->registers1.PC,
+            temp1, temp2, temp3,
+            *cpu->registers1.AF,
+            *cpu->registers1.BC,
+            *cpu->registers1.DE,
+            *cpu->registers1.HL,
+            *cpu->registers1.SP
+            );
 }
 

@@ -22,6 +22,8 @@ public:
 
     void print_bus_address(uint16_t address);
 
+    void annas_log(FILE *log);
+
 private:
     registers *registers1;
     Cpu *cpu;

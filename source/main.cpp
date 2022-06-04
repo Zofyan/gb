@@ -12,16 +12,19 @@ int main() {
     auto *rom = new loader();
     Bus bus;
     Cpu cpu(&bus);
-    Logger logger(&cpu.registers, &cpu, true);
+    Logger logger(&cpu.registers1, &cpu, true);
 
-    FILE *openrom;
+    FILE *openrom, *openlog;
+    openlog = fopen("../temp_log.txt", "w");
     openrom = fopen(rom->filename, "r");
     bus.load_rom(openrom);
 
     uint8_t temp;
     logger.print_instruction();
     uint16_t c;
+    logger.annas_log(openlog);
     while(cpu.execute_next_instruction()){
+        logger.annas_log(openlog);
         logger.print_registers();
         logger.print_flags();
 

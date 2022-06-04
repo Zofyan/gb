@@ -74,7 +74,7 @@ private:
     bool execute_ld_r_to_r_8(uint8_t instruction);
 
 public:
-    registers registers{};
+    registers registers1{};
     Cpu(Bus *bus);
     Bus *bus;
 

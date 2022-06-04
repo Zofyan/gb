@@ -155,11 +155,11 @@ int execute_instruction(struct registers *registers, bus *bus, uint8_t *buf){
                 break;
             case LD_AHLP:
                 ldm2r8(registers->A, registers->HL, registers, buf);
-                (*BUS_OFFSET(bus, *registers->HL))++;
+                (*registers->HL)++;
                 break;
             case LD_AHLM:
                 ldm2r8(registers->A, registers->HL, registers, buf);
-                (*BUS_OFFSET(bus, *registers->HL))--;
+                (*registers->HL)--;
                 break;
             case LD_BCA:
                 ldr2m8(registers->A, registers->BC, registers, buf);
@@ -169,11 +169,11 @@ int execute_instruction(struct registers *registers, bus *bus, uint8_t *buf){
                 break;
             case LD_HLPA:
                 ldr2m8(registers->A, registers->HL, registers, buf);
-                (*BUS_OFFSET(bus, *registers->HL))++;
+                (*registers->HL)++;
                 break;
             case LD_HLMA:
                 ldr2m8(registers->A, registers->HL, registers, buf);
-                (*BUS_OFFSET(bus, *registers->HL))--;
+                (*registers->HL)--;
                 break;
             // LOAD register to register instructions
 
@@ -203,7 +203,7 @@ int execute_instruction(struct registers *registers, bus *bus, uint8_t *buf){
                 ldm8(registers->HL, registers, buf);
                 break;
             case LD_HL16:
-                ldm16(registers->HL, registers, buf);
+                ld16(registers->HL, registers, buf);
                 break;
             case LD_BC16:
                 ld16(registers->BC, registers, buf);
@@ -216,6 +216,7 @@ int execute_instruction(struct registers *registers, bus *bus, uint8_t *buf){
                 break;
         default:
             printf("whoops %02X\n", inst);
+            exit(0);
             break;
     }
 

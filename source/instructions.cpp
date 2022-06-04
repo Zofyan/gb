@@ -9,10 +9,38 @@
 #include "../include/memory.h"
 
 void inc8(uint8_t* reg, registers *registers, bool inc, bool memory){
+
+    uint8_t newValue = *reg;
     if((*reg == 0xFF && inc) || (*reg == 0x00 && !inc)){
         registers->flags.C = 1;
     }
     else registers->flags.C = 0;
+
+    if(inc){
+        newValue++;
+        registers->flags.N = 0;
+    }
+    else{
+        newValue--;
+        registers->flags.N = 1;
+    }
+    *reg = newValue;
+    (*registers->PC)++;
+
+    if(*reg == 0x00){
+        registers->flags.Z = 1;
+    }
+    else registers->flags.Z = 0;
+    //printf("INC %04X\n", *registers->DE);
+}
+
+void inc16(uint16_t* reg, registers *registers, bool inc, bool memory){
+
+    if((*reg == 0xFFFF && inc) || (*reg == 0x0000 && !inc)){
+        registers->flags.C = 1;
+    }
+    else registers->flags.C = 0;
+
     if(inc){
         (*reg)++;
         registers->flags.N = 0;
@@ -21,21 +49,11 @@ void inc8(uint8_t* reg, registers *registers, bool inc, bool memory){
         (*reg)--;
         registers->flags.N = 1;
     }
-    (*registers->PC)++;
-    if(*reg == 0x00){
+
+    if(*reg == 0x0000){
         registers->flags.Z = 1;
     }
     else registers->flags.Z = 0;
-    //printf("INCA %02X\n", *reg);
-}
-
-void inc16(uint16_t* reg, registers *registers, bool inc, bool memory){
-    if(inc){
-        (*reg)++;
-    }
-    else{
-        (*reg)--;
-    }
     (*registers->PC)++;
     //printf("INC %02X\n", *registers->AF);
 }
@@ -48,13 +66,23 @@ void ret(registers *registers){
 }
 
 void jp(registers *registers, uint8_t* buf){
-    (*registers->PC) = *((uint16_t*) &buf[*registers->PC + 1]);
-    //printf("JP %02X\n", *registers->PC);
+    uint16_t temp;
+    bus_read_16b(registers->bus1, *registers->PC + 1, &temp);
+    (*registers->PC) = temp;
+    //printf("JP %02X\n", temp);
 }
 
 void jr(registers *registers, uint8_t* buf){
-    (*registers->PC) += *((int8_t*) &buf[*registers->PC + 1]);
-    //printf("JP %02X\n", *registers->PC);
+    int8_t temp;
+    if((*registers->PC) != 0x0209 && (*registers->PC) != 0x020d){
+        printf("weird\n");
+    }
+    bus_read(registers->bus1, *registers->PC + 1, (uint8_t*)&temp, 1);
+    //printf("PC %04X\n", (*registers->PC));
+    (*registers->PC) += temp;
+    //printf("PC %04X\n", (*registers->PC));
+    //printf("JR %02X\n", temp);
+    //printf("JR %i\n", temp);
 }
 
 void jf(flag flag, bool set, bool relative, registers *registers, uint8_t *buf){
@@ -90,7 +118,8 @@ void jf(flag flag, bool set, bool relative, registers *registers, uint8_t *buf){
 }
 
 void ld16(uint16_t* reg, registers *registers, uint8_t *buf){
-    (*reg) = *((uint16_t*) &buf[*registers->PC + 1]);
+    //printf("ld %04X\n", *registers->PC + 1);
+    bus_read_16b(registers->bus1, *registers->PC + 1, reg);
     (*registers->PC) += 3;
 }
 
@@ -100,7 +129,7 @@ void ld8(uint8_t* reg, registers *registers, uint8_t *buf){
 }
 
 void ldm8(uint16_t* reg, registers *registers, uint8_t *buf){
-    bus_write(registers->bus1, *reg, &buf[*registers->PC + 1], 1);
+    bus_write_8b(registers->bus1, *reg, &buf[*registers->PC + 1]);
     (*registers->PC) += 2;
 }
 void ldm16(uint16_t* reg, registers *registers, uint8_t *buf){
@@ -114,14 +143,14 @@ void ldr8(uint8_t* regA, uint8_t* regB, registers *registers){
 }
 
 void ldm2r8(uint8_t* regD, uint16_t* regS, registers *registers, uint8_t *buf){
-    bus_read(registers->bus1, *regS, regD, 1);
+    bus_read_8b(registers->bus1, *regS, regD);
     (*registers->PC)++;
 }
 
 void ldr2m8(uint8_t* regS, uint16_t* regD, registers *registers, uint8_t *buf){
-    if((*regD & 0xFF00) == 0xFF00) {
-        //printf("write %04X\n", *regD);
-    }
-    bus_write(registers->bus1, *regD, regS, 1);
+
+    //printf("write %04X\n", *regS);
+    //printf("location %04X\n", *regD );
+    bus_write_8b(registers->bus1, *regD , regS);
     (*registers->PC)++;
 }

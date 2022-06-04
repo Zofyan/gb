@@ -3,13 +3,17 @@
 //
 
 #include <cstdio>
+#include <cstdarg>
 #include "../include/logger.h"
 
-Logger::Logger(registers *registers){
+Logger::Logger(registers *registers, Cpu *cpu, bool enable){
         this->registers1 = registers;
+        this->cpu = cpu;
+        this->enable = enable;
     }
 
     void Logger::print_registers(){
+        if(!enable) return;
         printf("DEBUG: registers1: AF %04X - BC %04X - DE %04X - HL %04X - SP %04X - PC %04X\n",
                *registers1->AF,
                *registers1->BC,
@@ -20,21 +24,45 @@ Logger::Logger(registers *registers){
         );
     }
 
+    void Logger::print_instruction(){
+        if(!enable) return;
+        uint8_t temp;
+        uint16_t temp2;
+        cpu->bus->read(*cpu->registers.PC, &temp);
+        cpu->bus->read(*cpu->registers.PC + 1, (uint8_t*)&temp2);
+        cpu->bus->read(*cpu->registers.PC + 2, ((uint8_t*)&temp2) + 1);
+        printf("\033[0;31m");
+        printf("DEBUG: INSTRUCTION:    instruction %02X - address %04X - next 2 bytes %04X\n",
+               temp,
+               *cpu->registers.PC,
+               temp2
+        );
+        printf("\033[0m");
+    }
+
     void Logger::print_flags(){
+        if(!enable) return;
         printf("DEBUG: FLAGS:    Z %01X - N %01X - H %01X - C %01X\n",
-               registers1->flags.Z,
-               registers1->flags.N,
-               registers1->flags.H,
-               registers1->flags.C
+               registers1->flags->Z,
+               registers1->flags->N,
+               registers1->flags->H,
+               registers1->flags->C
         );
     }
 
     void Logger::print_bus_address(uint16_t address){
         uint8_t temp;
-        bus_read_8b(registers1->bus1, address, &temp);
+        cpu->bus->read(address, &temp);
         printf("DEBUG: BUS: address %04X - value %02X\n",
                address,
                temp
         );
     }
+
+void Logger::print(const char *format, ...) {
+    if(!enable) return;
+    va_list args;
+    va_start(args, format);
+    vprintf(format, args);
+}
 

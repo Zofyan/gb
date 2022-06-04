@@ -4,54 +4,125 @@
 
 #include <cstring>
 #include <cstdio>
+#include <cstdlib>
 #include "../include/bus.h"
+#include "../include/logger.h"
 
-
-int init_bus(bus *bus){
-    memset(bus, 0, sizeof(struct bus));
+Bus::Bus() {
+    rom_0 = (uint8_t*)calloc(ROM_0_END - ROM_0 + 1, 1);
+    rom_n = (uint8_t*)calloc(ROM_N_END - ROM_N + 1, 1);
+    vram = (uint8_t*)calloc(VRAM_END - VRAM_END + 1, 1);
+    eram = (uint8_t*)calloc(ERAM_END - ERAM + 1, 1);
+    wram_0 = (uint8_t*)calloc(WRAM_0_END - WRAM_0 + 1, 1);
+    wram_n = (uint8_t*)calloc(WRAM_N_END - WRAM_N + 1, 1);
+    oam = (uint8_t*)calloc(OAM_END - OAM + 1, 1);
+    io_registers = (uint8_t*)calloc(IO_REGISTERS_END - IO_REGISTERS + 1, 1);
+    hram = (uint8_t*)calloc(HRAM_END - HRAM + 1, 1);
+    int_enable = (uint8_t*)calloc(INT_ENABLE_END - INT_ENABLE + 1, 1);
 }
 
-int bus_read(bus *bus, uint16_t offset, uint8_t *buf, uint16_t size){
-    if((offset & 0xFF00) == 0xFF00) {
-        //printf("read %04X\n", offset);
-    }
-    memcpy(buf, (uint8_t*)bus + offset, size);
+void Bus::read(uint16_t address, uint8_t *buffer) {
+    if(address <= WRAM_N_END) read_rom(address, buffer);
+    else if(address <= VRAM_END) read_vram(address, buffer);
+    else if(address <= ERAM_END) read_eram(address, buffer);
+    else if(address <= WRAM_N_END) read_wram(address, buffer);
+    else if(address < OAM) exit(2);
+    else if(address <= OAM_END) read_oam(address, buffer);
+    else if(address < IO_REGISTERS) exit(2);
+    else if(address <= IO_REGISTERS_END) read_io_registers(address, buffer);
+    else if(address <= HRAM_END) read_hram(address, buffer);
+    else if(address <= INT_ENABLE_END) read_int_enable(address, buffer);
+    else exit(2);
 }
 
-int bus_read_8b(bus *bus, uint16_t offset, uint8_t *buf){
-    if((offset & 0xFF00) == 0xFF00) {
-        //printf("read %04X\n", offset);
-    }
-    memcpy(buf, (uint8_t*)bus + offset, 1);
+void Bus::write(uint16_t address, uint8_t *buffer) {
+    //printf("WRITE %04X\n", address);
+    if(address <= WRAM_N_END) write_rom(address, buffer);
+    else if(address <= VRAM_END) write_vram(address, buffer);
+    else if(address <= ERAM_END) write_eram(address, buffer);
+    else if(address <= WRAM_N_END) write_wram(address, buffer);
+    else if(address < OAM) exit(1);
+    else if(address <= OAM_END) write_oam(address, buffer);
+    else if(address < IO_REGISTERS) exit(1);
+    else if(address <= IO_REGISTERS_END) write_io_registers(address, buffer);
+    else if(address <= HRAM_END) write_hram(address, buffer);
+    else if(address <= INT_ENABLE_END) write_int_enable(address, buffer);
+    else exit(1);
 }
 
-int bus_read_16b(bus *bus, uint16_t offset, uint16_t *buf){
-    if((offset & 0xFF00) == 0xFF00) {
-        //printf("read %04X\n", offset);
-    }
-    memcpy((uint8_t*)buf + 1, (uint8_t*)bus + offset + 1, 1);
-    memcpy((uint8_t*)buf, (uint8_t*)bus + offset, 1);
+void Bus::write_int_enable(uint16_t address, uint8_t *buffer) {
+
 }
 
-int bus_write(bus *bus, uint16_t offset, uint8_t *buf, uint16_t size){
-    //if((offset & 0xFF00) == 0xFF00) {
-    //printf("write %04X\n", offset);
-    //}
-    memcpy( (uint8_t*)bus + offset, buf, size);
+void Bus::read_rom(uint16_t address, uint8_t *buffer) {
+    if(address <= ROM_0_END)
+        memcpy(buffer, &rom_0[address - ROM_0], 1);
+    else
+        memcpy(buffer, &rom_n[address - ROM_N], 1);
 }
 
-int bus_write_8b(bus *bus, uint16_t offset, uint8_t *buf){
-    //if((offset & 0xFF00) == 0xFF00) {
-    //printf("write %04X\n", offset);
-    //}
-    memcpy( (uint8_t*)bus + offset, buf, 1);
+void Bus::read_vram(uint16_t address, uint8_t *buffer) {
+
 }
 
+void Bus::read_eram(uint16_t address, uint8_t *buffer) {
 
-int bus_write_16b(bus *bus, uint16_t offset, uint16_t *buf){
-    //if((offset & 0xFF00) == 0xFF00) {
-    //printf("write %04X\n", offset);
-    //}
-    memcpy( (uint8_t*)bus + offset + 1, (uint8_t*)buf +1, 1);
-    memcpy( (uint8_t*)bus + offset, buf, 1);
+}
+
+void Bus::read_wram(uint16_t address, uint8_t *buffer) {
+    if(address <= WRAM_0_END)
+        memcpy(buffer, &wram_0[address - WRAM_0], 1);
+    else
+        memcpy(buffer, &wram_n[address - WRAM_N], 1);
+}
+
+void Bus::read_oam(uint16_t address, uint8_t *buffer) {
+
+}
+
+void Bus::read_io_registers(uint16_t address, uint8_t *buffer) {
+    memcpy(buffer, &io_registers[address - IO_REGISTERS], 1);
+}
+
+void Bus::read_hram(uint16_t address, uint8_t *buffer) {
+
+}
+
+void Bus::read_int_enable(uint16_t address, uint8_t *buffer) {
+
+}
+
+void Bus::write_rom(uint16_t address, uint8_t *buffer) {
+}
+
+void Bus::write_vram(uint16_t address, uint8_t *buffer) {
+
+}
+
+void Bus::write_eram(uint16_t address, uint8_t *buffer) {
+
+}
+
+void Bus::write_wram(uint16_t address, uint8_t *buffer) {
+    if(address <= WRAM_0_END)
+        memcpy(&wram_0[address - WRAM_0], buffer, 1);
+    else
+        memcpy(&wram_n[address - WRAM_N], buffer, 1);
+}
+
+void Bus::write_oam(uint16_t address, uint8_t *buffer) {
+
+}
+
+void Bus::write_io_registers(uint16_t address, uint8_t *buffer) {
+    memcpy(&io_registers[address - IO_REGISTERS], buffer, 1);
+}
+
+void Bus::write_hram(uint16_t address, uint8_t *buffer) {
+
+}
+
+void Bus::load_rom(FILE *rom) {
+    fread(rom_0, 1, ROM_0_END - ROM_0 + 1, rom);
+    fread(rom_n, 1, ROM_N_END - ROM_N + 1, rom);
 }

@@ -8,40 +8,63 @@
 #define SERIAL_SB 0xFF01
 #define SERIAL_SC 0xFF02
 
-#define BUS_OFFSET(bus, offset) ((uint8_t*)(&bus + offset))
-#define ROM_SIZE 16 * 1024
-#define VRAM_SIZE 8 * 1024
-#define ERAM_SIZE 8 * 1024
-#define WRAM_SIZE 4 * 1024
+#define ROM_0              0x0000
+#define ROM_0_END          0x3FFF
+#define ROM_N              0x4000
+#define ROM_N_END          0x7FFF
+#define VRAM               0x8000
+#define VRAM_END           0x9FFF
+#define ERAM               0xA000
+#define ERAM_END           0xBFFF
+#define WRAM_0             0xC000
+#define WRAM_0_END         0xCFFF
+#define WRAM_N             0xD000
+#define WRAM_N_END         0xDFFF
+#define OAM                0xFE00
+#define OAM_END            0xFE9F
+#define IO_REGISTERS       0xFF00
+#define IO_REGISTERS_END   0xFF7F
+#define HRAM               0xFF80
+#define HRAM_END           0xFFFE
+#define INT_ENABLE         0xFFFF
+#define INT_ENABLE_END     0xFFFF
 
-#define VRAM_OFFSET (ROM_SIZE + ROM_SIZE)
-#define ERAM_OFFSET (VRAM_OFFSET + VRAM_SIZE)
-#define WRAM_OFFSET (ERAM_OFFSET + ERAM_SIZE)
 
 #include <cstdint>
 
-typedef struct bus{
-    uint8_t rom_bank_16kb_0[ROM_SIZE];
-    uint8_t rom_bank_16kb_n[ROM_SIZE];
-    uint8_t vram_8kb[VRAM_SIZE];
-    uint8_t eram_8kb[ERAM_SIZE];
-    uint8_t wram_4kb[WRAM_SIZE];
-    uint8_t wram_4kb_x[WRAM_SIZE];
-    uint8_t nintendo_says_no_7680b_1[8 * 1024 - 512];
-    uint8_t oam_159b[160];
-    uint8_t nintendo_says_no_95b_2[96];
-    uint8_t io_registers_127b[128];
-    uint8_t hram_126b[127];
-    uint8_t interrupt_enable_regsiter_1b[1];
-} bus;
-
-int init_bus(bus *bus);
-int bus_read(bus *bus, uint16_t offset, uint8_t *buf, uint16_t size);
-int bus_read_8b(bus *bus, uint16_t offset, uint8_t *buf);
-int bus_read_16b(bus *bus, uint16_t offset, uint16_t *buf);
-int bus_write(bus *bus, uint16_t offset, uint8_t *buf, uint16_t size);
-int bus_write_8b(bus *bus, uint16_t offset, uint8_t *buf);
-int bus_write_16b(bus *bus, uint16_t offset, uint16_t *buf);
-
+class Bus{
+private:
+    uint8_t *rom_0;
+    uint8_t *rom_n;
+    uint8_t *vram;
+    uint8_t *eram;
+    uint8_t *wram_0;
+    uint8_t *wram_n;
+    uint8_t *oam;
+    uint8_t *io_registers;
+    uint8_t *hram;
+    uint8_t *int_enable;
+    void read_rom(uint16_t address, uint8_t *buffer);
+    void read_vram(uint16_t address, uint8_t *buffer);
+    void read_eram(uint16_t address, uint8_t *buffer);
+    void read_wram(uint16_t address, uint8_t *buffer);
+    void read_oam(uint16_t address, uint8_t *buffer);
+    void read_io_registers(uint16_t address, uint8_t *buffer);
+    void read_hram(uint16_t address, uint8_t *buffer);
+    void read_int_enable(uint16_t address, uint8_t *buffer);
+    void write_rom(uint16_t address, uint8_t *buffer);
+    void write_vram(uint16_t address, uint8_t *buffer);
+    void write_eram(uint16_t address, uint8_t *buffer);
+    void write_wram(uint16_t address, uint8_t *buffer);
+    void write_oam(uint16_t address, uint8_t *buffer);
+    void write_io_registers(uint16_t address, uint8_t *buffer);
+    void write_hram(uint16_t address, uint8_t *buffer);
+    void write_int_enable(uint16_t address, uint8_t *buffer);
+public:
+    Bus();
+    void load_rom(FILE *rom);
+    void read(uint16_t address, uint8_t *buffer);
+    void write(uint16_t address, uint8_t *buffer);
+};
 
 #endif //GB_BUS_H

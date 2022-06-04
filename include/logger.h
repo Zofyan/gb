@@ -10,16 +10,22 @@
 
 class Logger {
 public:
-    Logger(registers *registers);
+    Logger(registers *registers, Cpu *cpu, bool enable = true);
 
     void print_registers();
 
     void print_flags();
 
+    void print_instruction();
+
+    void print( const char *format, ...);
+
     void print_bus_address(uint16_t address);
 
 private:
     registers *registers1;
+    Cpu *cpu;
+    bool enable;
 
 };
 

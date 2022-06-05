@@ -132,10 +132,10 @@
 #define RST3 0xDF
 #define RST5 0xEF
 #define RST7 0xFF
-#define CALL_Z 0xC4
-#define CALL_C 0xD4
-#define CALL_NZ 0xCC
-#define CALL_NC 0xDC
+#define CALL_NZ 0xC4
+#define CALL_NC 0xD4
+#define CALL_Z 0xCC
+#define CALL_C 0xDC
 #define RET 0xC9
 #define RET_Z 0xC8
 #define RET_C 0xD8

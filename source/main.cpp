@@ -21,13 +21,11 @@ int main() {
 
     uint8_t temp;
     logger.print_instruction();
-    uint16_t c;
-    logger.annas_log(openlog);
+    uint16_t c = 0;
     while(cpu.execute_next_instruction()){
-        logger.annas_log(openlog);
         logger.print_registers();
         logger.print_flags();
-
+        logger.print_instruction();
         bus.read(SERIAL_SC, &temp);
         if(temp == 0x81){
             bus.read(SERIAL_SB, &temp);
@@ -36,7 +34,6 @@ int main() {
             bus.write(SERIAL_SC, &temp);
         }
 
-        logger.print_instruction();
         c++;
     }
 

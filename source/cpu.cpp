@@ -1387,6 +1387,7 @@ void Cpu::call_cond(flag flag, uint8_t set) const { // weird, flag checking shou
     switch (flag) {
         case flag_z:
             if (registers1.flags->Z == set) return call();
+            break;
         case flag_c:
             if (registers1.flags->C == set) return call();
             break;

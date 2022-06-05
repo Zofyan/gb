@@ -45,7 +45,7 @@ typedef struct registers{
 
 class Cpu{
 private:
-    void execute_ld_r_to_r_8(uint8_t *regA, const uint8_t *regB);
+    void ld_r_to_r_8(uint8_t *regA, const uint8_t *regB);
     void inc_m(uint16_t address);
     void dec_m(uint16_t address);
     void inc_r_16(uint16_t *reg);
@@ -58,7 +58,7 @@ private:
     void ld_r_to_m_8(uint8_t *reg, uint16_t address);
     void ld_m_to_r_8(uint8_t *reg, uint16_t address);
     void jr();
-    void jp();
+    void jp(uint16_t *reg);
     void j_cond(flag flag, uint8_t set, bool relative);
     void add_r(uint8_t *reg, bool addCarry);
     void add_m(uint16_t address, bool addCarry);
@@ -116,6 +116,11 @@ private:
     void reset_m(uint16_t address, uint8_t n) const;
     void set_r(uint8_t *reg, uint8_t n) const;
     void set_m(uint16_t address, uint8_t n) const;
+    void ld_hl_sp() const;
+    void add_sp_s8() const;
+    void ld_hl_sp_s8() const;
+    void c_flag(bool set) const;
+    void flip_a() const;
 
     static void cycles(uint8_t cycles);
     bool execute_add_r(uint8_t instruction);

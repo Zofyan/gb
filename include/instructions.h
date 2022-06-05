@@ -44,9 +44,9 @@
 #define LD_D_d8 0x16
 #define LD_H_d8 0x26
 #define LD_C_d8 0x0E
-#define LD_A_d8 0x1E
+#define LD_E_d8 0x1E
 #define LD_L_d8 0x2E
-#define LD_E_d8 0x3E
+#define LD_A_d8 0x3E
 
 #define LD_BC_d16 0x01
 #define LD_DE_d16 0x11
@@ -90,6 +90,7 @@
 #define JP 0xC3
 #define JP_Z 0xCA
 #define JP_C 0xDA
+#define JP_HL 0xE9
 
 #define DI 0xF3
 #define EI 0xFB
@@ -97,6 +98,9 @@
 #define RLA 0x017
 #define RRCA 0x0F
 #define RRA 0x1F
+#define SCF 0x37
+#define CCF 0x3F
+#define CPL 0x2F
 
 #define LD_A_a16m 0xEA
 #define LD_a16m_A 0xFA
@@ -122,6 +126,9 @@
 #define POP_DE 0xD1
 #define POP_HL 0xE1
 #define POP_AF 0xF1
+#define LD_SP_HL 0xF9
+#define LD_HL_SP_s8 0xF8
+#define ADD_SP_s8 0xE8
 
 #define CALL 0xCD
 #define RST0 0xC7

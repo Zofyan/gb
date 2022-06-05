@@ -36,6 +36,9 @@ void Bus::read(uint16_t address, uint8_t *buffer) {
 }
 
 void Bus::write(uint16_t address, uint8_t *buffer) {
+    if(address == 0xFF44){
+        printf("test\n");
+    }
     //printf("WRITE %04X\n", address);
     if(address <= ROM_N_END) write_rom(address, buffer);
     else if(address <= VRAM_END) write_vram(address, buffer);
@@ -128,15 +131,15 @@ void Bus::load_rom(FILE *rom) {
 }
 
 void Bus::push(uint16_t value, uint16_t *sp) {
-    write(*sp - 1, (uint8_t *)(&value));
-    write(*sp - 2, ((uint8_t *)(&value)) + 1);
+    write(*sp - 2, (uint8_t *) (&value));
+    write(*sp - 1, ((uint8_t *) (&value)) + 1);
     (*sp) -= 2;
 }
 
 uint16_t Bus::pop(uint16_t *sp) {
     uint16_t value;
-    read(*sp, ((uint8_t *)(&value)) + 1);
-    read(*sp + 1, (uint8_t *)(&value));
+    read(*sp + 1, ((uint8_t *)(&value)) + 1);
+    read(*sp, (uint8_t *)(&value));
     (*sp) += 2;
     return value;
 }

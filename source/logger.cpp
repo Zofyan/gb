@@ -73,7 +73,7 @@ void Logger::annas_log(FILE *log) {
     cpu->bus->read(*cpu->registers1.PC + 2, &temp3);
     fprintf(
             log,
-            "%04X: (%02X %02X %02X) AF: %04X, BC: %04X, DE: %04X, HL: %04X, SP:%04X\n",
+            "%04X: (%02X %02X %02X) AF: %04X, BC: %04X, DE: %04X, HL: %04X SP:%04X\n",
             *cpu->registers1.PC,
             temp1, temp2, temp3,
             *cpu->registers1.AF,

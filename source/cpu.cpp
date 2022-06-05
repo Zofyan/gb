@@ -47,6 +47,11 @@ bool Cpu::execute_next_instruction() {
     if(execute_from_m(instruction)) return true;
     if(execute_to_m(instruction)) return true;
     if(execute_jump(instruction)) return true;
+    if(instruction == 0xB1){
+        printf("test\n");
+    }
+    if(execute_arithmetic(instruction)) return true;
+    if(execute_bitwise(instruction)) return true;
 
     switch (instruction) {
         case NOP:
@@ -142,28 +147,20 @@ void Cpu::dec_r_16(uint16_t *reg) {
 
 
 void Cpu::inc_r_8(uint8_t *reg) {
-    if((*reg) == 0xFF) registers1.flags->C = 1;
-    else registers1.flags->C = 0;
-
     (*reg)++;
     registers1.flags->N = 0;
 
-    if(*reg == 0x00) registers1.flags->Z = 1;
-    else registers1.flags->Z = 0;
+    registers1.flags->Z = *reg == 0x00 ? 1 : 0;
 
     cycles(1);
     (*registers1.PC) += 1;
 }
 
 void Cpu::dec_r_8(uint8_t *reg) {
-    if((*reg) == 0x00) registers1.flags->C = 1;
-    else registers1.flags->C = 0;
-
     (*reg)--;
     registers1.flags->N = 1;
 
-    if(*reg == 0x00) registers1.flags->Z = 1;
-    else registers1.flags->Z = 0;
+    registers1.flags->Z = *reg == 0x00 ? 1 : 0;
 
     cycles(1);
     (*registers1.PC) += 1;
@@ -431,7 +428,8 @@ bool Cpu::execute_to_m(uint8_t instruction) {
 
 void Cpu::ld_r_to_m_8(uint8_t *reg, uint16_t address) {
     bus->write(address, reg);
-
+    uint8_t temp;
+    bus->read(0xc000, &temp);
     cycles(2);
     (*registers1.PC) += 1;
 }
@@ -440,15 +438,11 @@ void Cpu::inc_m(uint16_t address) {
     uint8_t temp;
     bus->read(address, &temp);
 
-    if(temp == 0xFF) registers1.flags->C = 1;
-    else registers1.flags->C = 0;
-
     temp++;
     registers1.flags->N = 0;
     bus->write(address, &temp);
 
-    if(temp == 0x00) registers1.flags->Z = 1;
-    else registers1.flags->Z = 0;
+    registers1.flags->Z = temp == 0x00 ? 1 : 0;
 
     cycles(3);
     (*registers1.PC) += 1;
@@ -458,15 +452,11 @@ void Cpu::dec_m(uint16_t address) {
     uint8_t temp;
     bus->read(address, &temp);
 
-    if(temp == 0xFF) registers1.flags->C = 1;
-    else registers1.flags->C = 0;
-
     temp--;
     registers1.flags->N = 1;
     bus->write(address, &temp);
 
-    if(temp == 0x00) registers1.flags->Z = 1;
-    else registers1.flags->Z = 0;
+    registers1.flags->Z = temp == 0x00 ? 1 : 0;
 
     cycles(3);
     (*registers1.PC) += 1;
@@ -568,3 +558,254 @@ void Cpu::jp() {
 
     cycles(3);
 }
+
+bool Cpu::execute_arithmetic(uint8_t instruction) {
+    bool addCarry = (instruction & 0x08) == 0x08;
+    uint8_t *reg = nullptr;
+    uint16_t address;
+
+    switch (instruction & 07) {
+        case 0x00:
+            reg = registers1.B;
+            break;
+        case 0x01:
+            reg = registers1.C;
+            break;
+        case 0x02:
+            reg = registers1.D;
+            break;
+        case 0x03:
+            reg = registers1.E;
+            break;
+        case 0x04:
+            reg = registers1.H;
+            break;
+        case 0x05:
+            reg = registers1.L;
+            break;
+        case 0x06:
+            address = *registers1.HL;
+            break;
+        case 0x07:
+            reg = registers1.A;
+            break;
+        default:
+            printf("invalid op\n");
+            exit(1);
+    }
+
+    switch (instruction & 0xF0) {
+        case 0x80:
+            reg != nullptr ? add_r(reg, addCarry) : add_m(address, addCarry);
+            break;
+        case 0x90:
+            reg != nullptr ? sub_r(reg, addCarry) : sub_m(address, addCarry);
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+void Cpu::add_r(uint8_t *reg, bool addCarry) {
+    uint16_t carry;
+    carry = *registers1.A;
+    carry += *reg + (addCarry ? registers1.flags->C : 0);
+
+    registers1.flags->C = carry >= 0x00FF;
+
+    (*registers1.A) += *reg + (addCarry ? registers1.flags->C : 0);
+
+    registers1.flags->Z = *registers1.A == 0x00 ? 1 : 0;
+    registers1.flags->N = 0;
+
+    cycles(1);
+    (*registers1.PC) += 1;
+}
+
+void Cpu::sub_r(uint8_t *reg, bool addCarry) {
+    uint16_t carry;
+    carry = *registers1.A;
+    carry -= *reg - (addCarry ? registers1.flags->C : 0);
+
+    registers1.flags->C = carry >= 0x00FF;
+
+    (*registers1.A) -= *reg - (addCarry ? registers1.flags->C : 0);
+
+    registers1.flags->Z = *registers1.A == 0x00 ? 1 : 0;
+    registers1.flags->N = 1;
+
+    cycles(1);
+    (*registers1.PC) += 1;
+}
+
+
+void Cpu::add_m(uint16_t address, bool addCarry) {
+    uint8_t temp;
+    bus->read(address, &temp);
+
+    uint16_t carry;
+    carry = *registers1.A;
+    carry += temp + (addCarry ? registers1.flags->C : 0);
+
+    registers1.flags->C = carry >= 0x00FF;
+
+    (*registers1.A) += temp + (addCarry ? registers1.flags->C : 0);
+
+    registers1.flags->Z = *registers1.A == 0x00 ? 1 : 0;
+    registers1.flags->N = 0;
+
+    cycles(2);
+    (*registers1.PC) += 1;
+}
+
+void Cpu::sub_m(uint16_t address, bool addCarry) {
+    uint8_t temp;
+    bus->read(address, &temp);
+
+    uint16_t carry;
+    carry = *registers1.A;
+    carry -= temp - (addCarry ? registers1.flags->C : 0);
+
+    registers1.flags->C = carry >= 0x00FF;
+
+    (*registers1.A) -= temp - (addCarry ? registers1.flags->C : 0);
+
+    registers1.flags->Z = *registers1.A == 0x00 ? 1 : 0;
+    registers1.flags->N = 1;
+
+    cycles(2);
+    (*registers1.PC) += 1;
+}
+
+bool Cpu::execute_bitwise(uint8_t instruction) {
+    uint8_t *reg = nullptr;
+    uint16_t address;
+
+    switch (instruction & 07) {
+        case 0x00:
+            reg = registers1.B;
+            break;
+        case 0x01:
+            reg = registers1.C;
+            break;
+        case 0x02:
+            reg = registers1.D;
+            break;
+        case 0x03:
+            reg = registers1.E;
+            break;
+        case 0x04:
+            reg = registers1.H;
+            break;
+        case 0x05:
+            reg = registers1.L;
+            break;
+        case 0x06:
+            address = *registers1.HL;
+            break;
+        case 0x07:
+            reg = registers1.A;
+            break;
+        default:
+            printf("invalid op\n");
+            exit(1);
+    }
+
+    switch (instruction & 0xF8) {
+        case 0xA0:
+            reg != nullptr ? and_r(reg) : and_m(address);
+            break;
+        case 0xA8:
+            reg != nullptr ? xor_r(reg) : xor_m(address);
+            break;
+        case 0xB0:
+            reg != nullptr ? or_r(reg) : or_m(address);
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+void Cpu::and_r(const uint8_t *reg) {
+    (*registers1.A) &= *reg;
+
+    registers1.flags->Z = *registers1.A == 0x00;
+    registers1.flags->H = 1;
+    registers1.flags->C = 0;
+    registers1.flags->N = 0;
+
+    cycles(1);
+    (*registers1.PC) += 1;
+}
+
+void Cpu::and_m(uint16_t address) {
+    uint8_t temp;
+    bus->read(address, &temp);
+
+    (*registers1.A) &= temp;
+
+    registers1.flags->Z = *registers1.A == 0x00;
+    registers1.flags->H = 1;
+    registers1.flags->C = 0;
+    registers1.flags->N = 0;
+
+    cycles(1);
+    (*registers1.PC) += 1;
+}
+
+void Cpu::xor_r(uint8_t *reg) const {
+    (*registers1.A) ^= *reg;
+
+    registers1.flags->Z = *registers1.A == 0x00;
+    registers1.flags->H = 1;
+    registers1.flags->C = 0;
+    registers1.flags->N = 0;
+
+    cycles(1);
+    (*registers1.PC) += 1;
+}
+
+void Cpu::xor_m(uint16_t address) {
+    uint8_t temp;
+    bus->read(address, &temp);
+
+    (*registers1.A) ^= temp;
+
+    registers1.flags->Z = *registers1.A == 0x00;
+    registers1.flags->H = 1;
+    registers1.flags->C = 0;
+    registers1.flags->N = 0;
+
+    cycles(1);
+    (*registers1.PC) += 1;
+}
+
+void Cpu::or_r(const uint8_t *reg) const {
+    (*registers1.A) |= *reg;
+
+    registers1.flags->Z = *registers1.A == 0x00;
+    registers1.flags->H = 1;
+    registers1.flags->C = 0;
+    registers1.flags->N = 0;
+
+    cycles(1);
+    (*registers1.PC) += 1;
+}
+
+void Cpu::or_m(uint16_t address) {
+    uint8_t temp;
+    bus->read(address, &temp);
+
+    (*registers1.A) |= temp;
+
+    registers1.flags->Z = *registers1.A == 0x00;
+    registers1.flags->H = 1;
+    registers1.flags->C = 0;
+    registers1.flags->N = 0;
+
+    cycles(1);
+    (*registers1.PC) += 1;
+}
+

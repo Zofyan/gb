@@ -60,8 +60,23 @@ private:
     void jr();
     void jp();
     void j_cond(flag flag, uint8_t set, bool relative);
+    void add_r(uint8_t *reg, bool addCarry);
+    void add_m(uint16_t address, bool addCarry);
+    void sub_r(uint8_t *reg, bool addCarry);
+    void sub_m(uint16_t address, bool addCarry);
+    void and_r(const uint8_t *reg);
+    void and_m(uint16_t address);
+    void xor_r(uint8_t *reg) const;
+    void xor_m(uint16_t address);
+    void or_r(const uint8_t *reg) const;
+    void or_m(uint16_t address);
+    void cmp_r(uint8_t *reg);
+    void cmp_m(uint16_t address);
 
     static void cycles(uint8_t cycles);
+    bool execute_arithmetic(uint8_t instruction);
+    bool execute_bitwise(uint8_t instruction);
+    bool execute_compare(uint8_t instruction);
     bool execute_jump(uint8_t instruction);
     bool execute_from_m(uint8_t instruction);
     bool execute_to_m(uint8_t instruction);

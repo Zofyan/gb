@@ -22,7 +22,7 @@ Bus::Bus() {
 }
 
 void Bus::read(uint16_t address, uint8_t *buffer) {
-    if(address <= WRAM_N_END) read_rom(address, buffer);
+    if(address <= ROM_N_END) read_rom(address, buffer);
     else if(address <= VRAM_END) read_vram(address, buffer);
     else if(address <= ERAM_END) read_eram(address, buffer);
     else if(address <= WRAM_N_END) read_wram(address, buffer);
@@ -37,7 +37,7 @@ void Bus::read(uint16_t address, uint8_t *buffer) {
 
 void Bus::write(uint16_t address, uint8_t *buffer) {
     //printf("WRITE %04X\n", address);
-    if(address <= WRAM_N_END) write_rom(address, buffer);
+    if(address <= ROM_N_END) write_rom(address, buffer);
     else if(address <= VRAM_END) write_vram(address, buffer);
     else if(address <= ERAM_END) write_eram(address, buffer);
     else if(address <= WRAM_N_END) write_wram(address, buffer);

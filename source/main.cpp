@@ -22,7 +22,7 @@ int main() {
     uint8_t temp;
     logger.print_instruction();
     uint16_t c;
-    logger.annas_log(openlog);
+    //logger.annas_log(openlog);
     while(cpu.execute_next_instruction()){
         logger.annas_log(openlog);
         logger.print_registers();

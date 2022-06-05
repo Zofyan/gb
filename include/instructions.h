@@ -26,6 +26,10 @@
 #define DEC_E 0x1D
 #define DEC_L 0x2D
 #define DEC_A 0x3D
+#define ADD_BC 0x09
+#define ADD_DE 0x19
+#define ADD_HL 0x29
+#define ADD_SP 0x39
 
 #define INC_BC 0x03
 #define INC_DE 0x13
@@ -89,6 +93,10 @@
 
 #define DI 0xF3
 #define EI 0xFB
+#define RLCA 0x07
+#define RLA 0x017
+#define RRCA 0x0F
+#define RRA 0x1F
 
 #define LD_A_a16m 0xEA
 #define LD_a16m_A 0xFA
@@ -116,7 +124,24 @@
 #define POP_AF 0xF1
 
 #define CALL 0xCD
+#define RST0 0xC7
+#define RST2 0xD7
+#define RST4 0xE7
+#define RST6 0xF7
+#define RST1 0xCF
+#define RST3 0xDF
+#define RST5 0xEF
+#define RST7 0xFF
+#define CALL_Z 0xC4
+#define CALL_C 0xD4
+#define CALL_NZ 0xCC
+#define CALL_NC 0xDC
 #define RET 0xC9
+#define RET_Z 0xC8
+#define RET_C 0xD8
+#define RET_NZ 0xC0
+#define RET_NC 0xD0
 
+#define FLAG_16bit 0xCB
 
 #endif //GB_INSTRUCTIONS_H

@@ -88,18 +88,44 @@ private:
     void ld_cm_to_r();
     void pop_r(uint16_t *reg) const;
     void push_r(const uint16_t *reg) const;
+    void add_r16(const uint16_t *reg);
     void call() const;
+    void rst(uint8_t n) const;
     void ret() const;
-    void call_cond(flag flag, bool set) const;
+    void call_cond(flag flag, uint8_t set) const;
+    void ret_cond(flag flag, uint8_t set) const;
+    void rlc_r(uint8_t *reg) const;
+    void rlc_m(uint16_t address) const;
+    void rrc_r(uint8_t *reg) const;
+    void rrc_m(uint16_t address) const;
+    void rl_r(uint8_t *reg) const;
+    void rl_m(uint16_t address) const;
+    void rr_r(uint8_t *reg) const;
+    void rr_m(uint16_t address) const;
+    void sla_r(uint8_t *reg) const;
+    void sla_m(uint16_t address) const;
+    void sra_r(uint8_t *reg) const;
+    void sra_m(uint16_t address) const;
+    void srl_r(uint8_t *reg) const;
+    void srl_m(uint16_t address) const;
+    void swap_r(uint8_t *reg) const;
+    void swap_m(uint16_t address) const;
+    void bit_r(uint8_t *reg, uint8_t n) const;
+    void bit_m(uint16_t address, uint8_t n) const;
+    void reset_r(uint8_t *reg, uint8_t n) const;
+    void reset_m(uint16_t address, uint8_t n) const;
+    void set_r(uint8_t *reg, uint8_t n) const;
+    void set_m(uint16_t address, uint8_t n) const;
 
     static void cycles(uint8_t cycles);
+    bool execute_add_r(uint8_t instruction);
+    bool execute_16bit_ops(uint8_t instruction);
     bool execute_function(uint8_t instruction);
     bool execute_stack(uint8_t instruction);
     bool execute_other_ld(uint8_t instruction);
     bool execute_misc(uint8_t instruction);
     bool execute_arithmetic(uint8_t instruction);
     bool execute_bitwise(uint8_t instruction);
-    bool execute_compare(uint8_t instruction);
     bool execute_jump(uint8_t instruction);
     bool execute_from_m(uint8_t instruction);
     bool execute_to_m(uint8_t instruction);
@@ -117,6 +143,8 @@ public:
     Bus *bus;
 
     bool execute_next_instruction();
+
+    void swap_r(uint16_t address) const;
 };
 
 

@@ -31,6 +31,9 @@ Cpu::Cpu(Bus *bus) {
 
     (*registers1.PC) = 0x100;
     (*registers1.SP) = HRAM_END;
+    (*registers1.BC) = 0x0013;
+    (*registers1.AF) = 0x01B0;
+    (*registers1.DE) = 0x00D8;
     this->bus = bus;
 }
 

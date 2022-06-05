@@ -94,6 +94,29 @@
 #define LD_a16m_A 0xFA
 #define LD_A_a8m 0xE0
 #define LD_a8m_A 0xF0
+#define LD_A_Cm 0xE2
+#define LD_Cm_A 0xF2
+
+#define ADD_d8 0xC6
+#define SUB_d8 0xD6
+#define ADD_c_d8 0xCE
+#define SUB_c_d8 0xDE
+#define AND_d8 0xE6
+#define XOR_d8 0xEE
+#define OR_d8 0xF6
+#define CP_d8 0xFE
+
+#define PUSH_BC 0xC5
+#define PUSH_DE 0xD5
+#define PUSH_HL 0xE5
+#define PUSH_AF 0xF5
+#define POP_BC 0xC1
+#define POP_DE 0xD1
+#define POP_HL 0xE1
+#define POP_AF 0xF1
+
+#define CALL 0xCD
+#define RET 0xC9
 
 
 #endif //GB_INSTRUCTIONS_H

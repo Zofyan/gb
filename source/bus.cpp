@@ -126,3 +126,17 @@ void Bus::load_rom(FILE *rom) {
     fread(rom_0, 1, ROM_0_END - ROM_0 + 1, rom);
     fread(rom_n, 1, ROM_N_END - ROM_N + 1, rom);
 }
+
+void Bus::push(uint16_t value, uint16_t *sp) {
+    write(*sp - 1, (uint8_t *)(&value));
+    write(*sp - 2, ((uint8_t *)(&value)) + 1);
+    (*sp) -= 2;
+}
+
+uint16_t Bus::pop(uint16_t *sp) {
+    uint16_t value;
+    read(*sp, ((uint8_t *)(&value)) + 1);
+    read(*sp + 1, (uint8_t *)(&value));
+    (*sp) += 2;
+    return value;
+}

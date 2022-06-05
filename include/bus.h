@@ -65,6 +65,8 @@ public:
     void load_rom(FILE *rom);
     void read(uint16_t address, uint8_t *buffer);
     void write(uint16_t address, uint8_t *buffer);
+    void push(uint16_t value, uint16_t *sp);
+    uint16_t pop(uint16_t *sp);
 };
 
 #endif //GB_BUS_H

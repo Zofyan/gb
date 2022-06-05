@@ -72,8 +72,16 @@ private:
     void or_m(uint16_t address);
     void cmp_r(uint8_t *reg);
     void cmp_m(uint16_t address);
+    void disable_int();
+    void enable_int();
+    void ld_r_to_a16m();
+    void ld_a16m_to_r();
+    void ld_r_to_a8m();
+    void ld_a8m_to_r();
 
     static void cycles(uint8_t cycles);
+    bool execute_other_ld(uint8_t instruction);
+    bool execute_misc(uint8_t instruction);
     bool execute_arithmetic(uint8_t instruction);
     bool execute_bitwise(uint8_t instruction);
     bool execute_compare(uint8_t instruction);

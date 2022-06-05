@@ -47,11 +47,10 @@ bool Cpu::execute_next_instruction() {
     if(execute_from_m(instruction)) return true;
     if(execute_to_m(instruction)) return true;
     if(execute_jump(instruction)) return true;
-    if(instruction == 0xB1){
-        printf("test\n");
-    }
     if(execute_arithmetic(instruction)) return true;
     if(execute_bitwise(instruction)) return true;
+    if(execute_misc(instruction)) return true;
+    if(execute_other_ld(instruction)) return true;
 
     switch (instruction) {
         case NOP:
@@ -807,5 +806,97 @@ void Cpu::or_m(uint16_t address) {
 
     cycles(1);
     (*registers1.PC) += 1;
+}
+
+bool Cpu::execute_misc(uint8_t instruction) {
+    switch (instruction) {
+        case DI:
+            disable_int();
+            break;
+        case EI:
+            enable_int();
+            break;
+        default:
+            return false;
+    }
+    return true;
+}
+
+void Cpu::enable_int() {
+    uint8_t temp = 1;
+    bus->write(INT_ENABLE, &temp);
+
+    cycles(1);
+    (*registers1.PC) += 1;
+}
+
+void Cpu::disable_int() {
+    uint8_t temp = 0;
+    bus->write(INT_ENABLE, &temp);
+
+    cycles(1);
+    (*registers1.PC) += 1;
+}
+
+void Cpu::ld_r_to_a16m() {
+    uint16_t temp;
+    bus->read(*registers1.PC + 1, (uint8_t *)(&temp));
+    bus->read(*registers1.PC + 2, ((uint8_t*)&temp) + 1);
+
+    bus->write(temp, registers1.A);
+
+    cycles(4);
+    (*registers1.PC) += 3;
+}
+
+void Cpu::ld_a16m_to_r() {
+    uint16_t temp;
+    bus->read(*registers1.PC + 1, (uint8_t *)(&temp));
+    bus->read(*registers1.PC + 2, ((uint8_t*)&temp) + 1);
+
+    bus->read(temp, registers1.A);
+
+    cycles(4);
+    (*registers1.PC) += 3;
+}
+
+void Cpu::ld_r_to_a8m() {
+    uint8_t temp;
+    bus->read(*registers1.PC + 1, &temp);
+
+    bus->write(temp + IO_REGISTERS, registers1.A);
+
+    cycles(3);
+    (*registers1.PC) += 2;
+}
+
+void Cpu::ld_a8m_to_r() {
+    uint8_t temp;
+    bus->read(*registers1.PC + 1, &temp);
+
+    bus->read(temp + IO_REGISTERS, registers1.A);
+
+    cycles(3);
+    (*registers1.PC) += 2;
+}
+
+bool Cpu::execute_other_ld(uint8_t instruction) {
+    switch (instruction) {
+        case LD_A_a16m:
+            ld_r_to_a16m();
+            break;
+        case LD_a16m_A:
+            ld_a16m_to_r();
+            break;
+        case LD_A_a8m:
+            ld_r_to_a8m();
+            break;
+        case LD_a8m_A:
+            ld_a8m_to_r();
+            break;
+        default:
+            return false;
+    }
+    return true;
 }
 

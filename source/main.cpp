@@ -12,7 +12,7 @@ int main() {
     auto *rom = new loader();
     Bus bus;
     Cpu cpu(&bus);
-    Logger logger(&cpu.registers1, &cpu, true);
+    Logger logger(&cpu.registers1, &cpu, false);
 
     FILE *openrom, *openlog;
     openlog = fopen("../temp_log.txt", "w");

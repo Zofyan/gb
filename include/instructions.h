@@ -87,5 +87,13 @@
 #define JP_Z 0xCA
 #define JP_C 0xDA
 
+#define DI 0xF3
+#define EI 0xFB
+
+#define LD_A_a16m 0xEA
+#define LD_a16m_A 0xFA
+#define LD_A_a8m 0xE0
+#define LD_a8m_A 0xF0
+
 
 #endif //GB_INSTRUCTIONS_H

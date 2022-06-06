@@ -32,11 +32,13 @@ int main() {
         if(temp == 0x81){
             bus.read(SERIAL_SB, &temp);
             printf("%c", temp);
+            fflush(stdout);
             temp = 0;
             bus.write(SERIAL_SC, &temp);
+            cpu.count++;
         }
-
         c++;
+
     }
 
     return 0;

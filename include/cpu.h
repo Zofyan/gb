@@ -121,6 +121,7 @@ private:
     void ld_hl_sp_s8() const;
     void c_flag(bool set) const;
     void flip_a() const;
+    void ld_sp_to_a16() const;
 
     static void cycles(uint8_t cycles);
     bool execute_add_r(uint8_t instruction);
@@ -143,6 +144,7 @@ private:
     bool execute_ld_r_to_r_8(uint8_t instruction);
 
 public:
+    uint32_t count = 0;
     registers registers1{};
     Cpu(Bus *bus);
     Bus *bus;

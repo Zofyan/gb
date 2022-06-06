@@ -15,6 +15,7 @@ class loader {
         //char filename[100] = "../../gb-test-roms/cpu_instrs/individual/07-jr,jp,call,ret,rst.gb";
         //char filename[100] = "../../gb-test-roms/cpu_instrs/individual/01-special.gb";
         //char filename[100] = "../../gb-test-roms/cpu_instrs/individual/03-op sp,hl.gb";
+        //char filename[100] = "../../gb-test-roms/cpu_instrs/individual/09-op r,r.gb";
         //char filename[100] = "../../gb-test-roms/cpu_instrs/cpu_instrs.gb";
         //char filename[100] = "/home/sofyan/CLionProjects/gb/tests/test1.gb";
 };

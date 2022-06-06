@@ -36,9 +36,6 @@ void Bus::read(uint16_t address, uint8_t *buffer) {
 }
 
 void Bus::write(uint16_t address, uint8_t *buffer) {
-    if(address == 0xFF44){
-        printf("test\n");
-    }
     //printf("WRITE %04X\n", address);
     if(address <= ROM_N_END) write_rom(address, buffer);
     else if(address <= VRAM_END) write_vram(address, buffer);

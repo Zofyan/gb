@@ -11,6 +11,7 @@
 
 #define NOP 0x00
 #define HALT 0x76
+#define STOP 0x10
 
 #define INC_B 0x04
 #define INC_D 0x14
@@ -129,6 +130,7 @@
 #define LD_SP_HL 0xF9
 #define LD_HL_SP_s8 0xF8
 #define ADD_SP_s8 0xE8
+#define LD_a16_SP 0x08
 
 #define CALL 0xCD
 #define RST0 0xC7

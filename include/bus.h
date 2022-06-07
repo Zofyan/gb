@@ -28,9 +28,20 @@
 #define HRAM_END           0xFFFE
 #define INT_ENABLE         0xFFFF
 #define INT_ENABLE_END     0xFFFF
+#define INT_REQUEST        0xFF0F
 
 
 #include <cstdint>
+#include <cstdio>
+
+typedef struct interrupts{
+    uint8_t vblank : 1;
+    uint8_t lcd_stat : 1;
+    uint8_t timer : 1;
+    uint8_t serial : 1;
+    uint8_t joypad : 1;
+    uint8_t x : 3;
+} interrupts_t;
 
 class Bus{
 private:
@@ -64,9 +75,13 @@ public:
     Bus();
     void load_rom(FILE *rom);
     void read(uint16_t address, uint8_t *buffer);
+    uint8_t read_v(uint16_t address);
     void write(uint16_t address, uint8_t *buffer);
+    void write_v(uint16_t address, uint8_t value);
     void push(uint16_t value, uint16_t *sp);
     uint16_t pop(uint16_t *sp);
+    interrupts_t *interrupt_enable;
+    interrupts_t *interrupt_request;
 };
 
 #endif //GB_BUS_H

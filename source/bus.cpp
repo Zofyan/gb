@@ -6,7 +6,6 @@
 #include <cstdio>
 #include <cstdlib>
 #include "../include/bus.h"
-#include "../include/logger.h"
 
 Bus::Bus() {
     rom_0 = (uint8_t*)calloc(ROM_0_END - ROM_0 + 1, 1);
@@ -19,6 +18,9 @@ Bus::Bus() {
     io_registers = (uint8_t*)calloc(IO_REGISTERS_END - IO_REGISTERS + 1, 1);
     hram = (uint8_t*)calloc(HRAM_END - HRAM + 1, 1);
     int_enable = (uint8_t*)calloc(INT_ENABLE_END - INT_ENABLE + 1, 1);
+
+    interrupt_request = (interrupts_t *) ((uint8_t *) (io_registers + (INT_REQUEST & 0x00FF)));
+    interrupt_enable = (interrupts_t *) ((uint8_t *) (int_enable));
 }
 
 void Bus::read(uint16_t address, uint8_t *buffer) {
@@ -26,9 +28,9 @@ void Bus::read(uint16_t address, uint8_t *buffer) {
     else if(address <= VRAM_END) read_vram(address, buffer);
     else if(address <= ERAM_END) read_eram(address, buffer);
     else if(address <= WRAM_N_END) read_wram(address, buffer);
-    else if(address < OAM) exit(2);
+    else if(address < OAM);
     else if(address <= OAM_END) read_oam(address, buffer);
-    else if(address < IO_REGISTERS) exit(2);
+    else if(address < IO_REGISTERS);
     else if(address <= IO_REGISTERS_END) read_io_registers(address, buffer);
     else if(address <= HRAM_END) read_hram(address, buffer);
     else if(address <= INT_ENABLE_END) read_int_enable(address, buffer);
@@ -41,9 +43,9 @@ void Bus::write(uint16_t address, uint8_t *buffer) {
     else if(address <= VRAM_END) write_vram(address, buffer);
     else if(address <= ERAM_END) write_eram(address, buffer);
     else if(address <= WRAM_N_END) write_wram(address, buffer);
-    else if(address < OAM) exit(1);
+    else if(address < OAM);
     else if(address <= OAM_END) write_oam(address, buffer);
-    else if(address < IO_REGISTERS) exit(1);
+    else if(address < IO_REGISTERS);
     else if(address <= IO_REGISTERS_END) write_io_registers(address, buffer);
     else if(address <= HRAM_END) write_hram(address, buffer);
     else if(address <= INT_ENABLE_END) write_int_enable(address, buffer);
@@ -139,4 +141,15 @@ uint16_t Bus::pop(uint16_t *sp) {
     read(*sp, (uint8_t *)(&value));
     (*sp) += 2;
     return value;
+}
+
+uint8_t Bus::read_v(uint16_t address) {
+    uint8_t value;
+    read(address, &value);
+    return value;
+}
+
+
+void Bus::write_v(uint16_t address, uint8_t value) {
+    write(address, &value);
 }

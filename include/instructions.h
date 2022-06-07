@@ -150,6 +150,7 @@
 #define RET_C 0xD8
 #define RET_NZ 0xC0
 #define RET_NC 0xD0
+#define RETI 0xD9
 
 #define FLAG_16bit 0xCB
 

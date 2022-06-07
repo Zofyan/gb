@@ -53,8 +53,8 @@ void Cpu::cycles(uint8_t cycles) {
         timeval curTime{};
         gettimeofday(&curTime, NULL);
         end = curTime.tv_usec / 1000;
-        printf("frame don, sleeping for %llu\n", 1500 - (end - start));
-        if(1500 > (end - start)) usleep((1500 - (end - start)) * 1000);
+        //printf("frame don, sleeping for %llu\n", 1500 - (end - start));
+        if(16 > (end - start)) usleep((16 - (end - start)) * 1000);
         cycles_done = 0;
         start = curTime.tv_usec / 1000;
     }
@@ -1889,7 +1889,8 @@ void Cpu::ld_hl_sp_s8() {
 
 void Cpu::flip_a() {
 
-    // #TODO implement this
+    (*registers1.A) = ~(*registers1.A);
+
     registers1.flags->N = 0;
     registers1.flags->H = 0;
 

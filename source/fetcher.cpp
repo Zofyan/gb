@@ -3,6 +3,7 @@
 //
 
 #include <cstdlib>
+#include <cstring>
 #include "../include/fetcher.h"
 #include "../include/bus.h"
 
@@ -43,7 +44,11 @@ void Fetcher::readtiledata() {
     uint8_t data = bus->read_v(addr + (state == ReadTileData1));
 
     for (uint8_t bitPos = 0; bitPos <= 7; bitPos++) {
-        pixelData[bitPos + (state == ReadTileData0 ? 0 : 8)] = (data >> bitPos) & 0x1;
+        if(state == ReadTileData0){
+            pixelData[bitPos] = (data >> bitPos) & 0x1;
+        }else{
+            pixelData[bitPos] |= ((data >> bitPos) & 0x1) << 1;
+        }
     }
 
     state = state == ReadTileData0 ? ReadTileData1 : PushToFIFO;

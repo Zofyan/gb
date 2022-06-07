@@ -5,8 +5,10 @@
 #include "SDL2/SDL.h"
 #include "bus.h"
 #include "fetcher.h"
+#include "lcd.h"
 
 #define LY 0xFF44
+#define LYC 0xFF45
 
 #ifndef GB_PPU_H
 #define GB_PPU_H
@@ -25,10 +27,11 @@ private:
     uint16_t lx;
     uint16_t ly;
     uint16_t ticks;
+    Lcd *lcd;
     Fetcher *fetcher;
     SDL_Renderer *renderer;
 public:
-    explicit Ppu(Bus *bus, SDL_Renderer *renderer);
+    explicit Ppu(Bus *bus1, SDL_Renderer *renderer1, Lcd *lcd1);
 
     void start();
 

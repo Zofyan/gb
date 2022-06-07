@@ -150,7 +150,7 @@ public:
     uint64_t start;
     uint64_t cycles_done = 0;
     uint32_t count = 0;
-    bool ime = false;
+    bool ime = true;
     registers_t registers1{};
     Cpu(Bus *bus, Ppu *ppu);
     Bus *bus;

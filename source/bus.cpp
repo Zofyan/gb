@@ -53,7 +53,7 @@ void Bus::write(uint16_t address, uint8_t *buffer) {
 }
 
 void Bus::write_int_enable(uint16_t address, uint8_t *buffer) {
-
+    memcpy(&interrupt_enable[0], buffer, 1);
 }
 
 void Bus::read_rom(uint16_t address, uint8_t *buffer) {
@@ -64,7 +64,7 @@ void Bus::read_rom(uint16_t address, uint8_t *buffer) {
 }
 
 void Bus::read_vram(uint16_t address, uint8_t *buffer) {
-
+    memcpy(buffer, &vram[address - VRAM], 1);
 }
 
 void Bus::read_eram(uint16_t address, uint8_t *buffer) {
@@ -91,14 +91,14 @@ void Bus::read_hram(uint16_t address, uint8_t *buffer) {
 }
 
 void Bus::read_int_enable(uint16_t address, uint8_t *buffer) {
-
+    memcpy(buffer, &interrupt_enable[0], 1);
 }
 
 void Bus::write_rom(uint16_t address, uint8_t *buffer) {
 }
 
 void Bus::write_vram(uint16_t address, uint8_t *buffer) {
-
+    memcpy(&vram[address - VRAM], buffer, 1);
 }
 
 void Bus::write_eram(uint16_t address, uint8_t *buffer) {

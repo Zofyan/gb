@@ -8,12 +8,13 @@
 #include "../include/ppu.h"
 #include "pthread.h"
 #include "../include/logger.h"
+#include "../include/lcd.h"
 
 void *cpu_thread(void *vargp){
 
     Cpu cpu = *((Cpu*)vargp);
 
-    Logger logger(&cpu.registers1, &cpu, false);
+    Logger logger(&cpu.registers1, &cpu, true);
     uint8_t temp;
     uint32_t c = 0;
     while (cpu.execute_next_instruction()) {
@@ -21,18 +22,18 @@ void *cpu_thread(void *vargp){
         logger.print_flags();
         logger.print_instruction();
         if (cpu.ime) {
-            if (cpu.bus->interrupt_request->timer && cpu.bus->interrupt_enable->timer) {
-                cpu.bus->interrupt_request->timer = 0;
-                cpu.bus->push(*cpu.registers1.PC, cpu.registers1.SP);
-                (*cpu.registers1.PC) = 0x50;
-                cpu.ime = false;
-            }
             if (cpu.bus->interrupt_request->vblank && cpu.bus->interrupt_enable->vblank) {
                 cpu.bus->interrupt_request->vblank = 0;
                 cpu.bus->push(*cpu.registers1.PC, cpu.registers1.SP);
                 (*cpu.registers1.PC) = 0x40;
                 cpu.ime = false;
 
+            }
+            if (cpu.bus->interrupt_request->timer && cpu.bus->interrupt_enable->timer) {
+                cpu.bus->interrupt_request->timer = 0;
+                cpu.bus->push(*cpu.registers1.PC, cpu.registers1.SP);
+                (*cpu.registers1.PC) = 0x50;
+                cpu.ime = false;
             }
             if (cpu.bus->interrupt_request->lcd_stat && cpu.bus->interrupt_enable->lcd_stat) {
                 cpu.bus->interrupt_request->lcd_stat = 0;
@@ -83,16 +84,18 @@ int main() {
     SDL_Renderer *renderer;
     SDL_Window *window;
 
-    SDL_CreateWindowAndRenderer(160, 144, 0, &window, &renderer);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    SDL_RenderClear(renderer);
+    //SDL_CreateWindowAndRenderer(160, 144, 0, &window, &renderer);
+    //SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    //SDL_RenderClear(renderer);
 
     pthread_t pthread;
 
     auto *rom = new loader();
     Bus bus;
 
-    Ppu ppu(&bus, renderer);
+    Lcd lcd(160, 144);
+
+    Ppu ppu(&bus, renderer, nullptr);
 
     Cpu cpu(&bus, &ppu);
 
@@ -109,15 +112,17 @@ int main() {
 
     SDL_Event e;
     bool quit = false;
-    while (!quit){
-        SDL_RenderPresent(renderer);
+    /*while (!quit){
         while (SDL_PollEvent(&e)){
             if (e.type == SDL_QUIT){
                 quit = true;
             }
         }
+        //SDL_RenderClear(renderer);
+        //SDL_RenderCopy(renderer, texture, NULL, NULL);
+        //SDL_RenderPresent(renderer);
     }
-
+*/
     pthread_join(pthread, NULL);
     return 0;
 }

@@ -150,6 +150,12 @@
 #define RET_C 0xD8
 #define RET_NZ 0xC0
 #define RET_NC 0xD0
+#define RETI 0xD9
+
+#define TIMER_DIV 0xFF04
+#define TIMER_TIMA 0xFF05
+#define TIMER_TMA 0xFF06
+#define TIMER_TAC 0xFF07
 
 #define FLAG_16bit 0xCB
 

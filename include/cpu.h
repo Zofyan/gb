@@ -6,17 +6,16 @@
 #define GB_CPU_H
 
 #include <cstdint>
-#include "memory.h"
 #include "bus.h"
 
 #define CARRY_16_SUB(a, b) ( a != 0x00 && ( a < b ) )
-#define CARRY_16_ADD(a, b) ( ( ( uint32_t )a ) + ( ( uint32_t )b ) > 0x00FF )
+#define CARRY_16_ADD(a, b) ( ( ( uint32_t )a ) + ( ( uint32_t )b ) > 0xFFFF )
 
-#define CARRY_8_SUB(a, b) ( ( a & 0x00FF) != 0x00 && ( ( a & 0x00FF) < ( a & 0x00FF) ) )
-#define CARRY_4_SUB(a, b) ( ( a & 0x0F ) != 0x00 && ( ( a & 0x0F ) < ( b & 0x0F ) ) )
+#define CARRY_8_SUB(a, b) ( ( ( a & 0x00FF) < ( b & 0x00FF) ) )
+#define CARRY_4_SUB(a, b) ( ( ( a & 0x0F ) < ( b & 0x0F ) ) )
 
 #define CARRY_8_ADD(a, b) ( ( ( uint16_t )( a & 0x00FF ) ) + ( ( uint16_t )( b & 0x00FF ) ) > 0x00FF )
-#define CARRY_4_ADD(a, b) ( ( a & 0x0F ) != 0x00 && ( ( a & 0x0F ) < ( b & 0x0F ) ) )
+#define CARRY_4_ADD(a, b) ( ( a & 0x0F ) + ( b & 0x0F ) > 0x0F )
 
 typedef struct flags_t{
     uint8_t X : 4;
@@ -128,7 +127,7 @@ private:
     void add_sp_s8();
     void ld_hl_sp_s8();
     void c_flag(bool set);
-    void flip_a();
+    void cpl();
     void ld_sp_to_a16();
     void reti();
     void cycles(uint8_t cycles);

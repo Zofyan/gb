@@ -741,7 +741,7 @@ void Cpu::jp(uint16_t *reg) {
 bool Cpu::execute_arithmetic(uint8_t instruction) {
     bool addCarry = (instruction & 0x08) == 0x08;
     uint8_t *reg = nullptr;
-    uint16_t address;
+    uint16_t address = 0;
 
     switch (instruction) { //check for d8 operations
         case ADD_d8:
@@ -785,6 +785,7 @@ bool Cpu::execute_arithmetic(uint8_t instruction) {
             printf("invalid op\n");
             exit(1);
     }
+    if(reg == nullptr && address == 0) exit(12);
 
     switch (instruction & 0xF0) {
         case 0x80:
@@ -800,12 +801,10 @@ bool Cpu::execute_arithmetic(uint8_t instruction) {
 }
 
 void Cpu::add_r(uint8_t *reg, bool addCarry) {
-    uint8_t temp = *reg + (addCarry ? registers1.flags->C : 0);
+    registers1.flags->C = CARRY_8_ADD(*registers1.A, *reg + (addCarry ? registers1.flags->C : 0));
+    registers1.flags->H = CARRY_4_ADD(*registers1.A, *reg + (addCarry ? registers1.flags->C : 0));
 
-    registers1.flags->C = CARRY_8_ADD(*registers1.A, temp);
-    registers1.flags->H = CARRY_4_ADD(*registers1.A, temp);
-
-    (*registers1.A) += temp;
+    (*registers1.A) += *reg + (addCarry ? registers1.flags->C : 0);
 
     registers1.flags->Z = *registers1.A == 0x00;
     registers1.flags->N = 0;
@@ -815,12 +814,10 @@ void Cpu::add_r(uint8_t *reg, bool addCarry) {
 }
 
 void Cpu::sub_r(uint8_t *reg, bool addCarry) {
-    uint8_t temp = *reg + (addCarry ? registers1.flags->C : 0);
+    registers1.flags->C = CARRY_8_SUB(*registers1.A, *reg + (addCarry ? registers1.flags->C : 0));
+    registers1.flags->H = CARRY_4_SUB(*registers1.A, *reg + (addCarry ? registers1.flags->C : 0));
 
-    registers1.flags->C = CARRY_8_SUB(*registers1.A, temp);
-    registers1.flags->H = CARRY_4_SUB(*registers1.A, temp);
-
-    (*registers1.A) -= temp;
+    (*registers1.A) -= *reg - (addCarry ? registers1.flags->C : 0);
 
     registers1.flags->Z = *registers1.A == 0x00;
     registers1.flags->N = 1;
@@ -844,12 +841,10 @@ void Cpu::add_m(uint16_t address, bool addCarry) {
     uint8_t temp;
     bus->read(address, &temp);
 
-    temp += (addCarry ? registers1.flags->C : 0);
+    registers1.flags->C = CARRY_8_ADD(*registers1.A, temp + (addCarry ? registers1.flags->C : 0));
+    registers1.flags->H = CARRY_4_ADD(*registers1.A, temp + (addCarry ? registers1.flags->C : 0));
 
-    registers1.flags->C = CARRY_8_ADD(*registers1.A, temp);
-    registers1.flags->H = CARRY_4_ADD(*registers1.A, temp);
-
-    (*registers1.A) += temp;
+    (*registers1.A) += temp + (addCarry ? registers1.flags->C : 0);
 
     registers1.flags->Z = *registers1.A == 0x00;
     registers1.flags->N = 0;
@@ -862,12 +857,10 @@ void Cpu::sub_m(uint16_t address, bool addCarry) {
     uint8_t temp;
     bus->read(address, &temp);
 
-    temp += (addCarry ? registers1.flags->C : 0);
+    registers1.flags->C = CARRY_8_SUB(*registers1.A, temp + (addCarry ? registers1.flags->C : 0));
+    registers1.flags->H = CARRY_4_SUB(*registers1.A, temp + (addCarry ? registers1.flags->C : 0));
 
-    registers1.flags->C = CARRY_8_SUB(*registers1.A, temp);
-    registers1.flags->H = CARRY_4_SUB(*registers1.A, temp);
-
-    (*registers1.A) -= temp;
+    (*registers1.A) -= temp - (addCarry ? registers1.flags->C : 0);
 
     registers1.flags->Z = *registers1.A == 0x00 ? 1 : 0;
     registers1.flags->N = 1;
@@ -877,7 +870,8 @@ void Cpu::sub_m(uint16_t address, bool addCarry) {
 }
 
 void Cpu::cmp_m(uint16_t address) {
-    uint8_t temp = bus->read_v(address);
+    uint8_t temp;
+    bus->read(address, &temp);
 
     registers1.flags->C = CARRY_8_SUB(*registers1.A, temp);
     registers1.flags->H = CARRY_4_SUB(*registers1.A, temp);
@@ -893,12 +887,10 @@ void Cpu::add_d8(bool addCarry) {
     uint8_t temp;
     bus->read(*registers1.PC + 1, &temp);
 
-    temp += (addCarry ? registers1.flags->C : 0);
+    registers1.flags->C = CARRY_8_ADD(*registers1.A, temp + (addCarry ? registers1.flags->C : 0));
+    registers1.flags->H = CARRY_4_ADD(*registers1.A, temp + (addCarry ? registers1.flags->C : 0));
 
-    registers1.flags->C = CARRY_8_ADD(*registers1.A, temp);
-    registers1.flags->H = CARRY_4_ADD(*registers1.A, temp);
-
-    (*registers1.A) += temp;
+    (*registers1.A) += temp + (addCarry ? registers1.flags->C : 0);
 
     registers1.flags->Z = *registers1.A == 0x00;
     registers1.flags->N = 0;
@@ -911,12 +903,10 @@ void Cpu::sub_d8(bool addCarry) {
     uint8_t temp;
     bus->read(*registers1.PC + 1, &temp);
 
-    temp += (addCarry ? registers1.flags->C : 0);
+    registers1.flags->C = CARRY_8_SUB(*registers1.A, temp + (addCarry ? registers1.flags->C : 0));
+    registers1.flags->H = CARRY_4_SUB(*registers1.A, temp + (addCarry ? registers1.flags->C : 0));
 
-    registers1.flags->C = CARRY_8_SUB(*registers1.A, temp);
-    registers1.flags->H = CARRY_4_SUB(*registers1.A, temp);
-
-    (*registers1.A) -= temp;
+    (*registers1.A) -= (temp + (addCarry ? registers1.flags->C : 0));
 
     registers1.flags->Z = *registers1.A == 0x00;
     registers1.flags->N = 1;
@@ -926,7 +916,8 @@ void Cpu::sub_d8(bool addCarry) {
 }
 
 void Cpu::cmp_d8() {
-    uint8_t temp = bus->read_v(*registers1.PC + 1);
+    uint8_t temp;
+    bus->read(*registers1.PC + 1, &temp);
 
     registers1.flags->C = CARRY_8_SUB(*registers1.A, temp);
     registers1.flags->H = CARRY_4_SUB(*registers1.A, temp);
@@ -1165,7 +1156,7 @@ bool Cpu::execute_misc(uint8_t instruction) {
             c_flag(false);
             break;
         case CPL:
-            flip_a();
+            cpl();
             break;
         default:
             return false;
@@ -1791,42 +1782,39 @@ void Cpu::add_sp_s8() {
     int8_t temp;
     bus->read(*registers1.PC + 1, (uint8_t *) &temp);
 
+    registers1.flags->C = CARRY_8_ADD(*registers1.SP, temp);
+    registers1.flags->H = CARRY_4_ADD(*registers1.SP, temp);
 
     (*registers1.SP) += temp;
 
     registers1.flags->Z = 0;
     registers1.flags->N = 0;
-    registers1.flags->C = CARRY_16_ADD(*registers1.SP, temp);
-    registers1.flags->H = CARRY_8_ADD(*registers1.SP, temp);
 
     cycles(4);
     (*registers1.PC) += 2;
 }
 void Cpu::ld_hl_sp_s8() {
-    uint16_t temp2 = *registers1.SP;
-
     int8_t temp;
     bus->read(*registers1.PC + 1, (uint8_t *) &temp);
 
+    registers1.flags->C = CARRY_8_ADD(*registers1.SP, temp);
+    registers1.flags->H = CARRY_4_ADD(*registers1.SP, temp);
 
-    temp2 += temp;
-
-    (*registers1.HL) = temp2;
+    (*registers1.HL) = (*registers1.SP) + temp;
 
     registers1.flags->Z = 0;
     registers1.flags->N = 0;
-    registers1.flags->C = CARRY_16_ADD(*registers1.HL, temp2);
-    registers1.flags->H = CARRY_8_ADD(*registers1.HL, temp2);
+
     cycles(3);
     (*registers1.PC) += 2;
 }
 
-void Cpu::flip_a() {
+void Cpu::cpl() {
 
     (*registers1.A) = ~(*registers1.A);
 
-    registers1.flags->N = 0;
-    registers1.flags->H = 0;
+    registers1.flags->N = 1;
+    registers1.flags->H = 1;
 
     cycles(1);
     (*registers1.PC) += 1;

@@ -16,6 +16,7 @@ int main() {
 
     FILE *openrom, *openlog;
     openrom = fopen(rom->filename, "r");
+    openlog = fopen("../temp_log.txt", "w");
     bus.load_rom(openrom);
 
     uint8_t temp;
@@ -23,6 +24,7 @@ int main() {
     uint16_t c = 0;
     logger.annas_log(openlog);
     while(cpu.execute_next_instruction()){
+        logger.annas_log(openlog);
         logger.print_registers();
         //logger.print_flags();
         logger.print_instruction();

@@ -67,7 +67,6 @@ void Logger::print(const char *format, ...) {
 }
 
 void Logger::annas_log(FILE *log) {
-    return;
     uint8_t temp1, temp2, temp3;
     cpu->bus->read(*cpu->registers1.PC, &temp1);
     cpu->bus->read(*cpu->registers1.PC + 1, &temp2);

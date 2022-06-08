@@ -9,6 +9,14 @@
 #include "memory.h"
 #include "bus.h"
 
+#define CARRY_16_SUB(a, b) ( a != 0x00 && ( a < b ) )
+#define CARRY_16_ADD(a, b) ( ( ( uint32_t )a ) + ( ( uint32_t )b ) > 0x00FF )
+
+#define CARRY_8_SUB(a, b) ( ( a & 0x00FF) != 0x00 && ( ( a & 0x00FF) < ( a & 0x00FF) ) )
+#define CARRY_4_SUB(a, b) ( ( a & 0x0F ) != 0x00 && ( ( a & 0x0F ) < ( b & 0x0F ) ) )
+
+#define CARRY_8_ADD(a, b) ( ( ( uint16_t )( a & 0x00FF ) ) + ( ( uint16_t )( b & 0x00FF ) ) > 0x00FF )
+#define CARRY_4_ADD(a, b) ( ( a & 0x0F ) != 0x00 && ( ( a & 0x0F ) < ( b & 0x0F ) ) )
 
 typedef struct flags_t{
     uint8_t X : 4;

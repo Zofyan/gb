@@ -26,7 +26,8 @@ Bus::Bus() {
     interrupt_enable = (interrupts_t *) ((uint8_t *) (int_enable));
     memset(interrupt_enable, 0, 1);
 
-    //io_registers[TIMER_TAC - IO_REGISTERS] = 0b00000001;
+
+    timer = (timer_t2*) &io_registers[4];
 }
 
 void Bus::read(uint16_t address, uint8_t *buffer) {
@@ -123,8 +124,8 @@ void Bus::write_oam(uint16_t address, uint8_t *buffer) {
 
 void Bus::write_io_registers(uint16_t address, uint8_t *buffer) {
     if(address == TIMER_DIV){
-        io_registers[TIMER_DIV - IO_REGISTERS] = 0;
-        io_registers[TIMER_TIMA - IO_REGISTERS] = 0;
+        timer->timer_div = 0;
+        timer->timer_tima = 0;
         return;
     }
     memcpy(&io_registers[address - IO_REGISTERS], buffer, 1);
@@ -161,8 +162,4 @@ uint8_t Bus::read_v(uint16_t address) {
 
 void Bus::write_v(uint16_t address, uint8_t value) {
     write(address, &value);
-}
-
-void Bus::tick(uint16_t cycles) {
-    io_registers[TIMER_DIV - IO_REGISTERS] += cycles;
 }

@@ -39,10 +39,10 @@ Cpu::Cpu(Bus *bus) {
 }
 
 void Cpu::cycles(uint8_t cycles) {
-    bus->tick(cycles);
-    if(bus->read_v(TIMER_TAC) & (1 << 2)){
+    bus->timer->timer_div += cycles * 4;
+    if(bus->timer->timer_tac.timer_enable){
         uint16_t freq = 0;
-        switch ((bus->read_v(TIMER_TAC)) & 0b11) {
+        switch (bus->timer->timer_tac.timer_clock) {
             case 0b00:
                 freq = 1024;
                 break;
@@ -58,13 +58,13 @@ void Cpu::cycles(uint8_t cycles) {
             default:
                 break;
         }
-        if((bus->read_v(TIMER_DIV) % (freq/4) ) == 0){
-            uint16_t temp = bus->read_v(TIMER_TIMA) + 1;
-            if(temp > 0x00FF){
+        if((bus->timer->timer_div % (freq/4) ) == 0){
+            uint16_t overflow = bus->timer->timer_tima + 1;
+            if(overflow > 0x00FF){
                 bus->interrupt_request->timer = 1;
-                bus->write_v(TIMER_TIMA, bus->read_v(TIMER_TMA));
+                bus->timer->timer_tima = bus->timer->timer_tma;
             }
-            else bus->write_v(TIMER_TIMA, temp);
+            else bus->timer->timer_tima = overflow;
         }
     }
 
@@ -800,17 +800,12 @@ bool Cpu::execute_arithmetic(uint8_t instruction) {
 }
 
 void Cpu::add_r(uint8_t *reg, bool addCarry) {
-    uint16_t carry;
-    uint16_t carryh;
-    carry = *registers1.A;
-    carryh = *registers1.A & 0x0F;
-    carry += *reg + (addCarry ? registers1.flags->C : 0);
-    carryh += *reg + (addCarry ? registers1.flags->C : 0);
+    uint8_t temp = *reg + (addCarry ? registers1.flags->C : 0);
 
-    registers1.flags->C = carry > 0x00FF;
-    registers1.flags->H = carryh > 0x000F;
+    registers1.flags->C = CARRY_8_ADD(*registers1.A, temp);
+    registers1.flags->H = CARRY_4_ADD(*registers1.A, temp);
 
-    (*registers1.A) += *reg + (addCarry ? registers1.flags->C : 0);
+    (*registers1.A) += temp;
 
     registers1.flags->Z = *registers1.A == 0x00;
     registers1.flags->N = 0;
@@ -820,17 +815,12 @@ void Cpu::add_r(uint8_t *reg, bool addCarry) {
 }
 
 void Cpu::sub_r(uint8_t *reg, bool addCarry) {
-    int32_t carry;
-    int32_t carryh;
-    carry = *registers1.A;
-    carryh = *registers1.A & 0x0F;
-    carry -= *reg - (addCarry ? registers1.flags->C : 0);
-    carryh -= *reg - (addCarry ? registers1.flags->C : 0);
+    uint8_t temp = *reg + (addCarry ? registers1.flags->C : 0);
 
-    registers1.flags->C = carry < 0;
-    registers1.flags->H = carryh < 0;
+    registers1.flags->C = CARRY_8_SUB(*registers1.A, temp);
+    registers1.flags->H = CARRY_4_SUB(*registers1.A, temp);
 
-    (*registers1.A) -= *reg - (addCarry ? registers1.flags->C : 0);
+    (*registers1.A) -= temp;
 
     registers1.flags->Z = *registers1.A == 0x00;
     registers1.flags->N = 1;
@@ -840,15 +830,8 @@ void Cpu::sub_r(uint8_t *reg, bool addCarry) {
 }
 
 void Cpu::cmp_r(const uint8_t *reg) {
-    uint16_t carry;
-    uint16_t carryh;
-    carry = *registers1.A;
-    carryh = *registers1.A & 0x0F;
-    carry -= *reg;
-    carryh -= *reg;
-
-    registers1.flags->C = carry > 0x00FF;
-    registers1.flags->H = carryh > 0x000F;
+    registers1.flags->C = CARRY_8_SUB(*registers1.A, *reg);
+    registers1.flags->H = CARRY_4_SUB(*registers1.A, *reg);
 
     registers1.flags->Z = *registers1.A == *reg;
     registers1.flags->N = 1;
@@ -861,17 +844,12 @@ void Cpu::add_m(uint16_t address, bool addCarry) {
     uint8_t temp;
     bus->read(address, &temp);
 
-    uint16_t carry;
-    uint16_t carryh = *registers1.A & 0x0F;
+    temp += (addCarry ? registers1.flags->C : 0);
 
-    carry = *registers1.A;
-    carry += temp + (addCarry ? registers1.flags->C : 0);
-    carryh += temp + (addCarry ? registers1.flags->C : 0);
+    registers1.flags->C = CARRY_8_ADD(*registers1.A, temp);
+    registers1.flags->H = CARRY_4_ADD(*registers1.A, temp);
 
-    registers1.flags->C = carry > 0x00FF;
-    registers1.flags->H = carryh > 0x000F;
-
-    (*registers1.A) += temp + (addCarry ? registers1.flags->C : 0);
+    (*registers1.A) += temp;
 
     registers1.flags->Z = *registers1.A == 0x00;
     registers1.flags->N = 0;
@@ -884,17 +862,12 @@ void Cpu::sub_m(uint16_t address, bool addCarry) {
     uint8_t temp;
     bus->read(address, &temp);
 
-    uint16_t carry;
-    uint16_t carryh = *registers1.A & 0x0F;
+    temp += (addCarry ? registers1.flags->C : 0);
 
-    carry = *registers1.A;
-    carry -= temp - (addCarry ? registers1.flags->C : 0);
-    carryh -= temp + (addCarry ? registers1.flags->C : 0);
+    registers1.flags->C = CARRY_8_SUB(*registers1.A, temp);
+    registers1.flags->H = CARRY_4_SUB(*registers1.A, temp);
 
-    registers1.flags->C = carry > 0x00FF;
-    registers1.flags->H = carryh > 0x000F;
-
-    (*registers1.A) -= temp - (addCarry ? registers1.flags->C : 0);
+    (*registers1.A) -= temp;
 
     registers1.flags->Z = *registers1.A == 0x00 ? 1 : 0;
     registers1.flags->N = 1;
@@ -904,18 +877,10 @@ void Cpu::sub_m(uint16_t address, bool addCarry) {
 }
 
 void Cpu::cmp_m(uint16_t address) {
-    uint8_t temp;
-    bus->read(address, &temp);
+    uint8_t temp = bus->read_v(address);
 
-    uint16_t carry;
-    uint16_t carryh = *registers1.A & 0x0F;
-
-    carry = *registers1.A;
-    carry -= temp;
-    carryh -= temp;
-
-    registers1.flags->C = carry > 0x00FF;
-    registers1.flags->H = carryh > 0x000F;
+    registers1.flags->C = CARRY_8_SUB(*registers1.A, temp);
+    registers1.flags->H = CARRY_4_SUB(*registers1.A, temp);
 
     registers1.flags->Z = *registers1.A == temp;
     registers1.flags->N = 1;
@@ -928,17 +893,12 @@ void Cpu::add_d8(bool addCarry) {
     uint8_t temp;
     bus->read(*registers1.PC + 1, &temp);
 
-    uint16_t carry;
-    uint16_t carryh = *registers1.A & 0x0F;
+    temp += (addCarry ? registers1.flags->C : 0);
 
-    carry = *registers1.A;
-    carry += temp + (addCarry ? registers1.flags->C : 0);
-    carryh += temp + (addCarry ? registers1.flags->C : 0);
+    registers1.flags->C = CARRY_8_ADD(*registers1.A, temp);
+    registers1.flags->H = CARRY_4_ADD(*registers1.A, temp);
 
-    registers1.flags->C = carry > 0x00FF;
-    registers1.flags->H = carryh > 0x0F;
-
-    (*registers1.A) += temp + (addCarry ? registers1.flags->C : 0);
+    (*registers1.A) += temp;
 
     registers1.flags->Z = *registers1.A == 0x00;
     registers1.flags->N = 0;
@@ -951,17 +911,12 @@ void Cpu::sub_d8(bool addCarry) {
     uint8_t temp;
     bus->read(*registers1.PC + 1, &temp);
 
-    int32_t carry;
-    int32_t carryh = *registers1.A & 0x0F;
+    temp += (addCarry ? registers1.flags->C : 0);
 
-    carry = *registers1.A;
-    carry -= temp - (addCarry ? registers1.flags->C : 0);
-    carryh -= temp - (addCarry ? registers1.flags->C : 0);
+    registers1.flags->C = CARRY_8_SUB(*registers1.A, temp);
+    registers1.flags->H = CARRY_4_SUB(*registers1.A, temp);
 
-    registers1.flags->C = carry < 0;
-    registers1.flags->H = carryh < 0;
-
-    (*registers1.A) -= temp - (addCarry ? registers1.flags->C : 0);
+    (*registers1.A) -= temp;
 
     registers1.flags->Z = *registers1.A == 0x00;
     registers1.flags->N = 1;
@@ -971,19 +926,10 @@ void Cpu::sub_d8(bool addCarry) {
 }
 
 void Cpu::cmp_d8() {
-    uint8_t temp;
-    bus->read(*registers1.PC + 1, &temp);
+    uint8_t temp = bus->read_v(*registers1.PC + 1);
 
-    int32_t carry;
-    int32_t carryh = *registers1.A & 0x0F;
-
-    carry = *registers1.A;
-    carry -= temp;
-
-    carryh -= temp;
-
-    registers1.flags->C = carry < 0;
-    registers1.flags->H = carryh < 0;
+    registers1.flags->C = CARRY_8_SUB(*registers1.A, temp);
+    registers1.flags->H = CARRY_4_SUB(*registers1.A, temp);
 
     registers1.flags->Z = *registers1.A == temp;
     registers1.flags->N = 1;
@@ -1726,16 +1672,8 @@ bool Cpu::execute_add_r(uint8_t instruction) {
 }
 
 void Cpu::add_r16(const uint16_t *reg) {
-    uint32_t carry;
-    uint32_t carryh;
-    carryh = *registers1.HL & 0x00FF;
-    carryh += *reg;
-
-    carry = *registers1.HL;
-    carry += *reg;
-
-    registers1.flags->C = carry > 0x0000FFFF;
-    registers1.flags->H = carryh > 0x000000FF;
+    registers1.flags->C = CARRY_16_ADD(*registers1.HL, *reg);
+    registers1.flags->H = CARRY_8_ADD(*registers1.HL, *reg);
 
     (*registers1.HL) += *reg;
 
@@ -1850,44 +1788,35 @@ void Cpu::ld_hl_sp() {
 }
 
 void Cpu::add_sp_s8() {
-    uint32_t carry, carryh;
-    carry = *registers1.SP;
-    carryh= *registers1.SP & 0x00FF;
-
     int8_t temp;
     bus->read(*registers1.PC + 1, (uint8_t *) &temp);
 
-    carry += temp;
-    carryh += temp;
 
     (*registers1.SP) += temp;
 
     registers1.flags->Z = 0;
     registers1.flags->N = 0;
-    registers1.flags->C = carry > 0x0000FFFF;
-    registers1.flags->H = carryh > 0x000000FF;
+    registers1.flags->C = CARRY_16_ADD(*registers1.SP, temp);
+    registers1.flags->H = CARRY_8_ADD(*registers1.SP, temp);
 
     cycles(4);
     (*registers1.PC) += 2;
 }
 void Cpu::ld_hl_sp_s8() {
-    uint32_t carry, carryh;
-    carry = *registers1.SP;
-    carryh= *registers1.SP & 0x00FF;
+    uint16_t temp2 = *registers1.SP;
 
     int8_t temp;
     bus->read(*registers1.PC + 1, (uint8_t *) &temp);
 
-    carry += temp;
-    carryh += temp;
 
-    (*registers1.HL) = (*registers1.SP) + temp;
+    temp2 += temp;
+
+    (*registers1.HL) = temp2;
 
     registers1.flags->Z = 0;
     registers1.flags->N = 0;
-    registers1.flags->C = carry > 0x0000FFFF;
-    registers1.flags->H = carryh > 0x000000FF;
-
+    registers1.flags->C = CARRY_16_ADD(*registers1.HL, temp2);
+    registers1.flags->H = CARRY_8_ADD(*registers1.HL, temp2);
     cycles(3);
     (*registers1.PC) += 2;
 }

@@ -43,6 +43,19 @@ typedef struct interrupts{
     uint8_t x : 3;
 } interrupts_t;
 
+typedef struct timer_tac {
+    uint8_t timer_clock : 2;
+    uint8_t timer_enable : 1;
+    uint8_t x : 5;
+} timer_tac_t;
+
+typedef struct timer{
+    uint8_t timer_div;
+    uint8_t timer_tima;
+    uint8_t timer_tma;
+    timer_tac_t timer_tac;
+} timer_t2;
+
 class Bus{
 private:
     uint8_t *rom_0;
@@ -79,10 +92,11 @@ public:
     void write(uint16_t address, uint8_t *buffer);
     void write_v(uint16_t address, uint8_t value);
     void push(uint16_t value, uint16_t *sp);
-    void tick(uint16_t cycles = 1);
     uint16_t pop(uint16_t *sp);
     interrupts_t *interrupt_enable;
     interrupts_t *interrupt_request;
+
+    timer_t2 *timer;
 };
 
 #endif //GB_BUS_H

@@ -10,7 +10,7 @@
 
 class Logger {
 public:
-    Logger(registers_t *registers, Cpu *cpu, bool enable = true);
+    Logger(registers *registers, Cpu *cpu, bool enable = true);
 
     void print_registers();
 
@@ -24,8 +24,11 @@ public:
 
     void annas_log(FILE *log);
 
+    void other_log(FILE *log);
+
 private:
-    registers_t *registers1;
+    uint32_t count = 0;
+    registers *registers1;
     Cpu *cpu;
     bool enable;
 

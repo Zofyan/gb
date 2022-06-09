@@ -56,6 +56,15 @@ typedef struct timer{
     timer_tac_t timer_tac;
 } timer_t2;
 
+typedef struct PPURegisters{
+    uint8_t lcdc;
+    uint8_t lcds;
+    uint8_t scy;
+    uint8_t scx;
+    uint8_t ly;
+    uint8_t lyc;
+} PPURegisters_t;
+
 class Bus{
 private:
     uint8_t *rom_0;
@@ -97,6 +106,7 @@ public:
     interrupts_t *interrupt_request;
 
     timer_t2 *timer;
+    PPURegisters_t *ppu_registers;
 };
 
 #endif //GB_BUS_H

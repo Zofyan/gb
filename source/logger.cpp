@@ -6,7 +6,7 @@
 #include <cstdarg>
 #include "../include/logger.h"
 
-Logger::Logger(registers_t *registers, Cpu *cpu, bool enable){
+Logger::Logger(registers *registers, Cpu *cpu, bool enable){
         this->registers1 = registers;
         this->cpu = cpu;
         this->enable = enable;
@@ -82,6 +82,30 @@ void Logger::annas_log(FILE *log) {
             *cpu->registers1.DE,
             *cpu->registers1.HL,
             *cpu->registers1.SP
-            );
+    );
+}
+
+void Logger::other_log(FILE *log) {
+    if(count > 0x4FFFFF) return;
+    return;
+    count++;
+    fprintf(
+            log,
+            "A: %02X F: %02X B: %02X C: %02X D: %02X E: %02X H: %02X L: %02X SP: %04X PC: 00:%04X (%02X %02X %02X %02X)\n",
+            *cpu->registers1.A,
+            *cpu->registers1.F,
+            *cpu->registers1.B,
+            *cpu->registers1.C,
+            *cpu->registers1.D,
+            *cpu->registers1.E,
+            *cpu->registers1.H,
+            *cpu->registers1.L,
+            *cpu->registers1.SP,
+            *cpu->registers1.PC,
+            cpu->bus->read_v(*cpu->registers1.PC + 0),
+            cpu->bus->read_v(*cpu->registers1.PC + 1),
+            cpu->bus->read_v(*cpu->registers1.PC + 2),
+            cpu->bus->read_v(*cpu->registers1.PC + 3)
+    );
 }
 

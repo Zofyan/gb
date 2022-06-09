@@ -14,19 +14,23 @@ int main() {
 
     auto *rom = new loader();
     Bus bus;
-    Cpu cpu(&bus);
+    Lcd lcd(160, 144);
+    Ppu ppu(&bus, nullptr, &lcd);
+    Cpu cpu(&bus, &ppu);
     Logger logger(&cpu.registers1, &cpu, false);
 
     FILE *openrom, *openlog;
     openrom = fopen(rom->filename, "r");
+    openlog = fopen("../temp_log.txt", "w");
     bus.load_rom(openrom);
-
     uint8_t temp;
     logger.print_instruction();
-    uint16_t c = 0;
+    logger.other_log(openlog);
+    uint32_t c = 0;
     while(cpu.execute_next_instruction()){
+        logger.other_log(openlog);
         logger.print_registers();
-        //logger.print_flags();
+        logger.print_flags();
         logger.print_instruction();
         bus.read(SERIAL_SC, &temp);
         if(temp == 0x81){
@@ -39,6 +43,9 @@ int main() {
         }
         c++;
 
+        if(c == 53984){
+            printf("we here\n");
+        }
     }
 
     return 0;

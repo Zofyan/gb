@@ -28,6 +28,7 @@ Bus::Bus() {
 
 
     timer = (timer_t2*) &io_registers[4];
+    ppu_registers = (PPURegisters_t *) &io_registers[0x40];
 }
 
 void Bus::read(uint16_t address, uint8_t *buffer) {
@@ -90,6 +91,7 @@ void Bus::read_oam(uint16_t address, uint8_t *buffer) {
 
 void Bus::read_io_registers(uint16_t address, uint8_t *buffer) {
     memcpy(buffer, &io_registers[address - IO_REGISTERS], 1);
+    if(address == 0xFF44) (*buffer) = 0x90;
 }
 
 void Bus::read_hram(uint16_t address, uint8_t *buffer) {

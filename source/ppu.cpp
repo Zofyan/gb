@@ -63,7 +63,7 @@ void Ppu::pixeltransfer() {
             pixel = fetcher->fifo.front();
             fetcher->fifo.pop();
 
-            lcd->write_pixel(ticks, bus->read_v(LY), pixel);
+            lcd->write_pixel(ticks, bus->ppu_registers->ly, pixel);
             //SDL_SetRenderDrawColor(renderer, (pixel == 0x00 ? 255 : 50), (pixel == 0x00 ? 50 : 255), 0, 255);
             //SDL_RenderDrawPoint(renderer, lx, 50);
             ticks++;
@@ -77,11 +77,11 @@ void Ppu::hblank() {
     if (ticks == 456) {
         ticks = 0;
 
-        bus->write_v(LY, bus->read_v(LY) + 1);
-        if (bus->read_v(LY) == bus->read_v(LYC)) {
+        bus->ppu_registers->ly++;
+        if (bus->ppu_registers->ly == bus->ppu_registers->lyc) {
             bus->interrupt_request->lcd_stat = 1;
         }
-        if (bus->read_v(LY) == 144) {
+        if (bus->ppu_registers->ly == 144) {
             state = VBlank;
             bus->interrupt_request->vblank = 1;
         } else {
@@ -97,9 +97,9 @@ void Ppu::hblank() {
 void Ppu::vblank() {
     if (ticks == 456) {
         ticks = 0;
-        bus->write_v(LY, bus->read_v(LY) + 1);
-        if (bus->read_v(LY) == 153) {
-            bus->write_v(LY, 0);
+        bus->ppu_registers->ly++;
+        if (bus->ppu_registers->ly == 153) {
+            bus->ppu_registers->ly = 0;
             state = OAMSearch;
         }
     } else {

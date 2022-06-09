@@ -7,13 +7,15 @@
 
 #include <cstdint>
 #include "bus.h"
+#include "ppu.h"
 
 #define CARRY_16_SUB(a, b) ( a != 0x00 && ( a < b ) )
-#define CARRY_16_ADD(a, b) ( ( ( uint32_t )a ) + ( ( uint32_t )b ) > 0xFFFF )
+#define CARRY_16_ADD(a, b) ( ( ( uint32_t )a ) + ( ( uint32_t )b ) > 0x0000FFFF )
 
 #define CARRY_8_SUB(a, b) ( ( ( a & 0x00FF) < ( b & 0x00FF) ) )
 #define CARRY_4_SUB(a, b) ( ( ( a & 0x0F ) < ( b & 0x0F ) ) )
 
+#define CARRY_WEIRD_ADD(a, b) ( ( ( uint16_t )( a & 0x0FFF ) ) + ( ( uint16_t )( b & 0x0FFF ) ) > 0x0FFF )
 #define CARRY_8_ADD(a, b) ( ( ( uint16_t )( a & 0x00FF ) ) + ( ( uint16_t )( b & 0x00FF ) ) > 0x00FF )
 #define CARRY_4_ADD(a, b) ( ( a & 0x0F ) + ( b & 0x0F ) > 0x0F )
 
@@ -156,8 +158,9 @@ public:
     bool ime = true;
     uint32_t count = 0;
     registers registers1{};
-    Cpu(Bus *bus);
+    Cpu(Bus *bus, Ppu *ppu);
     Bus *bus;
+    Ppu *ppu;
 
     bool execute_next_instruction();
 

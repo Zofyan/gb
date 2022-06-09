@@ -6,7 +6,7 @@
 #include <cstdarg>
 #include "../include/logger.h"
 
-Logger::Logger(registers *registers, Cpu *cpu, bool enable){
+Logger::Logger(registers_t *registers, Cpu *cpu, bool enable){
         this->registers1 = registers;
         this->cpu = cpu;
         this->enable = enable;

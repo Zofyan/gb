@@ -4,7 +4,10 @@
 #include "../include/instructions.h"
 #include "../include/cpu.h"
 #include "../include/bus.h"
+#include "../include/ppu.h"
+#include "pthread.h"
 #include "../include/logger.h"
+#include "../include/lcd.h"
 
 int main() {
     std::cout << "Hello, World!" << std::endl;

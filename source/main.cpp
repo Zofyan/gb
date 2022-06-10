@@ -17,18 +17,18 @@ int main() {
     Lcd lcd(160, 144);
     Ppu ppu(&bus, nullptr, &lcd);
     Cpu cpu(&bus, &ppu);
-    Logger logger(&cpu.registers1, &cpu, false);
+    Logger logger(&cpu.registers1, &cpu, true);
 
     FILE *openrom, *openlog;
     openrom = fopen(rom->filename, "r");
-    openlog = fopen("../temp_log.txt", "w");
+    //openlog = fopen("../temp_log.txt", "w");
     bus.load_rom(openrom);
     uint8_t temp;
     logger.print_instruction();
-    logger.other_log(openlog);
+    //logger.other_log(openlog);
     uint32_t c = 0;
     while(cpu.execute_next_instruction()){
-        logger.other_log(openlog);
+        //logger.other_log(openlog);
         logger.print_registers();
         logger.print_flags();
         logger.print_instruction();
@@ -42,10 +42,6 @@ int main() {
             cpu.count++;
         }
         c++;
-
-        if(c == 53984){
-            printf("we here\n");
-        }
     }
 
     return 0;

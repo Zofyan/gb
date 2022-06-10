@@ -10,6 +10,8 @@ include_directories(${SDL2_INCLUDE_DIRS})
 
 add_executable(gb source/main.cpp include/loader.h source/instructions.cpp
         include/instructions.h source/cpu.cpp include/cpu.h
-        source/bus.cpp include/bus.h include/logger.h source/logger.cpp)
+        source/bus.cpp include/bus.h include/logger.h source/logger.cpp
+        source/ppu.cpp include/ppu.h source/lcd.cpp include/lcd.h
+        source/fetcher.cpp include/fetcher.h)
 
 target_link_libraries(gb ${SDL2_LIBRARIES})

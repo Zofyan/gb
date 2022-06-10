@@ -1313,6 +1313,7 @@ bool Cpu::execute_stack(uint8_t instruction) {
             break;
         case POP_AF:
             pop_r(registers1.AF);
+            (*registers1.F) &= 0xF0;
             break;
         case POP_BC:
             pop_r(registers1.BC);
@@ -1667,6 +1668,7 @@ void Cpu::sra_r(uint8_t *reg) {
     rrc_r(reg);
     if (previous_state == 1) (*reg) |= 0x80;
     else (*reg) &= 0x7F;
+    registers1.flags->Z = *reg == 0x00;
 }
 
 void Cpu::sra_m(uint16_t address) {
@@ -1677,6 +1679,7 @@ void Cpu::sra_m(uint16_t address) {
     uint8_t previous_state = temp >> 7;
     if (previous_state == 1) temp |= 0x80;
     else temp &= 0x7F;
+    registers1.flags->Z = temp == 0x00;
     bus->write(address, &temp);
 }
 
@@ -1748,7 +1751,7 @@ void Cpu::swap_m(uint16_t address) {
 }
 
 void Cpu::bit_r(uint8_t *reg, uint8_t n) {
-    uint8_t temp = (*reg << (7 - n)) >> 7;
+    uint8_t temp = (*reg) & (0x1 << n);
 
     registers1.flags->Z = temp == 0x00;
     registers1.flags->N = 0;
@@ -1762,7 +1765,7 @@ void Cpu::bit_m(uint16_t address, uint8_t n) {
     uint8_t temp2;
     bus->read(address, &temp2);
 
-    uint8_t temp = (temp2 << (7 - n)) >> 7;
+    uint8_t temp = (temp2) & (0x1 << n);
 
     registers1.flags->Z = temp == 0x00;
     registers1.flags->N = 0;
@@ -1773,7 +1776,7 @@ void Cpu::bit_m(uint16_t address, uint8_t n) {
 }
 
 void Cpu::reset_r(uint8_t *reg, uint8_t n) {
-    (*reg) &= 0xFE << n;
+    (*reg) &= ~(0x1 << n);
 
     cycles(1);
     (*registers1.PC) += 1;
@@ -1783,7 +1786,7 @@ void Cpu::reset_m(uint16_t address, uint8_t n) {
     uint8_t temp;
     bus->read(address, &temp);
 
-    temp &= 0xFE << n;
+    temp &= ~(0x1 << n);
 
     bus->write(address, &temp);
 

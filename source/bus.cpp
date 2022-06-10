@@ -36,9 +36,9 @@ void Bus::read(uint16_t address, uint8_t *buffer) {
     else if(address <= VRAM_END) read_vram(address, buffer);
     else if(address <= ERAM_END) read_eram(address, buffer);
     else if(address <= WRAM_N_END) read_wram(address, buffer);
-    else if(address < OAM);
+    else if(address < OAM) (*buffer) = 0xFF;
     else if(address <= OAM_END) read_oam(address, buffer);
-    else if(address < IO_REGISTERS) (*buffer) = 0x00;
+    else if(address < IO_REGISTERS) (*buffer) = 0xFF;
     else if(address <= IO_REGISTERS_END) read_io_registers(address, buffer);
     else if(address <= HRAM_END) read_hram(address, buffer);
     else if(address <= INT_ENABLE_END) read_int_enable(address, buffer);

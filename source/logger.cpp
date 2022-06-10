@@ -86,7 +86,7 @@ void Logger::annas_log(FILE *log) {
 }
 
 void Logger::other_log(FILE *log) {
-    if(count > 0x4FFFFF) return;
+    if(count > 0x0FFFFF) return;
     return;
     count++;
     fprintf(

@@ -29,8 +29,8 @@ int main() {
     uint32_t c = 0;
     while(cpu.execute_next_instruction()){
         //logger.other_log(openlog);
-        logger.print_registers();
-        logger.print_flags();
+        //logger.print_registers();
+        //logger.print_flags();
         logger.print_instruction();
         bus.read(SERIAL_SC, &temp);
         if(temp == 0x81){

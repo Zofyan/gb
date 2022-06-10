@@ -132,6 +132,7 @@ private:
     void cpl();
     void ld_sp_to_a16();
     void reti();
+    void daa();
     void cycles(uint8_t cycles);
 
     void execute_interrupt();

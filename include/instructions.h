@@ -95,6 +95,7 @@
 
 #define DI 0xF3
 #define EI 0xFB
+#define DAA 0x27
 #define RLCA 0x07
 #define RLA 0x017
 #define RRCA 0x0F

@@ -45,6 +45,9 @@ void Ppu::oamfetch() {
     if (ticks == 40) {
         state = PixelTransfer;
         ticks = 0;
+        auto tileLine = bus->ppu_registers->ly % 8;
+        auto tileMapRowAddr = 0x9800 + (uint16_t(bus->ppu_registers->ly/8) * 32);
+        fetcher->start(tileMapRowAddr, tileLine);
     } else {
         ticks++;
     }
@@ -52,24 +55,20 @@ void Ppu::oamfetch() {
 
 
 void Ppu::pixeltransfer() {
-    if (ticks == 160) {
-        state = HBlank;
-        ticks = 0;
-    } else {
-        fetcher->tick();
+    fetcher->tick();
+    uint8_t pixel;
+    if (!fetcher->fifo.empty()) {
+        pixel = fetcher->fifo.front();
+        fetcher->fifo.pop();
 
-        uint8_t pixel;
-        if (!fetcher->fifo.empty()) {
-            pixel = fetcher->fifo.front();
-            fetcher->fifo.pop();
-
-            lcd->write_pixel(ticks, bus->ppu_registers->ly, pixel);
-            //SDL_SetRenderDrawColor(renderer, (pixel == 0x00 ? 255 : 50), (pixel == 0x00 ? 50 : 255), 0, 255);
-            //SDL_RenderDrawPoint(renderer, lx, 50);
-            ticks++;
-        }
-
+        lcd->write_pixel(x, bus->ppu_registers->ly, pixel);
+        x++;
     }
+    if (x == 160) {
+        state = HBlank;
+        x = 0;
+    }
+
 }
 
 
@@ -87,6 +86,7 @@ void Ppu::hblank() {
         } else {
             state = OAMSearch;
         }
+
     } else {
         ticks++;
     }
@@ -102,6 +102,8 @@ void Ppu::vblank() {
             bus->ppu_registers->ly = 0;
             state = OAMSearch;
         }
+        SDL_RenderClear(renderer);
+        SDL_RenderPresent(renderer);
     } else {
         ticks++;
     }

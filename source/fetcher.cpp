@@ -74,3 +74,11 @@ void Fetcher::readtileid() {
     state = ReadTileData0;
 }
 
+void Fetcher::start(uint16_t mapAddr1, uint8_t tileLine1) {
+    tileIndex = 0;
+    mapAddr = mapAddr1;
+    tileLine = tileLine1;
+    state = ReadTileID;
+    while(!fifo.empty()){fifo.pop();}
+}
+

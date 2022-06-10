@@ -28,6 +28,7 @@ Bus::Bus() {
 
 
     timer = (timer_t2*) &io_registers[4];
+    io_registers[0] = 0x0F;
     ppu_registers = (PPURegisters_t *) &io_registers[0x40];
 }
 
@@ -91,7 +92,6 @@ void Bus::read_oam(uint16_t address, uint8_t *buffer) {
 
 void Bus::read_io_registers(uint16_t address, uint8_t *buffer) {
     memcpy(buffer, &io_registers[address - IO_REGISTERS], 1);
-    if(address == 0xFF44) (*buffer) = 0x90;
 }
 
 void Bus::read_hram(uint16_t address, uint8_t *buffer) {
@@ -130,6 +130,7 @@ void Bus::write_io_registers(uint16_t address, uint8_t *buffer) {
         timer->timer_tima = 0;
         return;
     }
+    if(address == 0xFF00) return;
     memcpy(&io_registers[address - IO_REGISTERS], buffer, 1);
 }
 
@@ -143,8 +144,8 @@ void Bus::load_rom(FILE *rom) {
 }
 
 void Bus::push(uint16_t value, uint16_t *sp) {
-    write(*sp - 2, (uint8_t *) (&value));
     write(*sp - 1, ((uint8_t *) (&value)) + 1);
+    write(*sp - 2, (uint8_t *) (&value));
     (*sp) -= 2;
 }
 

@@ -24,8 +24,8 @@ private:
     SDL_Window *window;
     Bus *bus;
     PPUState state;
-    uint16_t lx;
-    uint16_t ly;
+    uint16_t x = 0;
+    uint16_t y = 0;
     uint16_t ticks;
     Lcd *lcd;
     Fetcher *fetcher;

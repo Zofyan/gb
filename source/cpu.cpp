@@ -4,6 +4,8 @@
 
 #include <cstdio>
 #include <cstdlib>
+#include <sys/time.h>
+#include <unistd.h>
 #include "../include/cpu.h"
 #include "../include/instructions.h"
 #include "../include/bus.h"
@@ -73,9 +75,17 @@ void Cpu::cycles(uint8_t cycles) {
                 } else bus->timer->timer_tima = overflow;
             }
         }
+        cycles_done++;
+        if(cycles_done >= 17556){
+            timeval curTime{};
+            gettimeofday(&curTime, NULL);
+            auto end = curTime.tv_usec / 1000;
+            //printf("frame don, sleeping for %llu\n", 1500 - (end - start));
+            if(16 > (end - start)) usleep((16 - (end - start)) * 1000);
+            cycles_done = 0;
+            start = curTime.tv_usec / 1000;
+        }
     }
-
-
 }
 
 bool Cpu::execute_next_instruction() {
@@ -109,12 +119,9 @@ bool Cpu::execute_next_instruction() {
             break;
         case HALT:
             (*registers1.PC)++;
-            printf("HALT\n");
-            exit(76);
             while (!(*(uint8_t *) bus->interrupt_request)) { cycles(1); }
             break;
         case STOP:
-            printf("STOP\n");
             break;
         default:
             printf("whoops %02X\n", instruction);
@@ -1449,13 +1456,20 @@ void Cpu::rst(uint8_t n) {
 
     bus->push(*registers1.PC, registers1.SP);
 
-    bus->read(n * 0x08, ((uint8_t *) registers1.PC));
-    bus->read(n * 0x08 + 1, ((uint8_t *) registers1.PC) + 1);
+    (*registers1.PC) = 0x08 * n;
 
     cycles(4);
 }
 
 void Cpu::ret() {
+    (*registers1.PC) = bus->pop(registers1.SP);
+
+    cycles(4);
+}
+
+void Cpu::reti() {
+    ime = true;
+
     (*registers1.PC) = bus->pop(registers1.SP);
 
     cycles(4);
@@ -1477,7 +1491,7 @@ void Cpu::call_cond(flag flag, uint8_t set) { // weird, flag checking should be 
     (*registers1.PC) += 3;
 }
 
-void Cpu::ret_cond(flag flag, uint8_t set) { // weird, flag checking should be working with ==...
+void Cpu::ret_cond(flag flag, uint8_t set) {
     cycles(1);
     switch (flag) {
         case flag_z:
@@ -1834,15 +1848,8 @@ void Cpu::add_sp_s8() {
     int8_t temp;
     bus->read(*registers1.PC + 1, (uint8_t *) &temp);
 
-    if(temp > 0) {
-        registers1.flags->C = CARRY_8_ADD(*registers1.SP, temp);
-        registers1.flags->H = CARRY_4_ADD(*registers1.SP, temp);
-    } else{
-        uint8_t temp2;
-        temp2 = -temp;
-        registers1.flags->C = CARRY_8_SUB(*registers1.SP, temp2);
-        registers1.flags->H = CARRY_4_SUB(*registers1.SP, temp2);
-    }
+    registers1.flags->C = CARRY_8_ADD(*registers1.SP, temp);
+    registers1.flags->H = CARRY_4_ADD(*registers1.SP, temp);
 
     (*registers1.SP) += temp;
 
@@ -1857,15 +1864,8 @@ void Cpu::ld_hl_sp_s8() {
     int8_t temp;
     bus->read(*registers1.PC + 1, (uint8_t *) &temp);
 
-    if(temp > 0) {
-        registers1.flags->C = CARRY_8_ADD(*registers1.SP, temp);
-        registers1.flags->H = CARRY_4_ADD(*registers1.SP, temp);
-    } else{
-        uint8_t temp2;
-        temp2 = -temp;
-        registers1.flags->C = CARRY_8_SUB(*registers1.SP, temp2);
-        registers1.flags->H = CARRY_4_SUB(*registers1.SP, temp2);
-    }
+    registers1.flags->C = CARRY_8_ADD(*registers1.SP, temp);
+    registers1.flags->H = CARRY_4_ADD(*registers1.SP, temp);
 
     (*registers1.HL) = (*registers1.SP) + temp;
 
@@ -1900,22 +1900,39 @@ void Cpu::c_flag(bool set) {
 
 void Cpu::ld_sp_to_a16() {
     uint16_t address;
-    bus->read(*registers1.PC + 0, (uint8_t *) &address);
-    bus->read(*registers1.PC + 1, ((uint8_t *) &address) + 1);
+    bus->read(*registers1.PC + 1, (uint8_t *) &address);
+    bus->read(*registers1.PC + 2, ((uint8_t *) &address) + 1);
 
-    bus->write(address, ((uint8_t *) registers1.SP) + 1);
-    bus->write(address + 1, ((uint8_t *) registers1.SP));
+    bus->write(address + 1, ((uint8_t *) registers1.SP) + 1);
+    bus->write(address, ((uint8_t *) registers1.SP));
 
     cycles(5);
     (*registers1.PC) += 3;
 }
 
-void Cpu::reti() {
-    ime = true;
+void Cpu::daa() {
+    if (!registers1.flags->N) {
+        if (registers1.flags->C || *registers1.A > 0x99) {
+            *registers1.A += 0x60;
+            registers1.flags->C = 1;
+        }
+        if (registers1.flags->H || (*registers1.A & 0x0f) > 0x09) {
+            *registers1.A += 0x6;
+        }
+    } else {
+        if (registers1.flags->C) {
+            *registers1.A -= 0x60;
+        }
+        if (registers1.flags->H) {
+            *registers1.A -= 0x6;
+        }
+    }
 
-    (*registers1.PC) = bus->pop(registers1.SP);
+    registers1.flags->Z = *registers1.A == 0; // the usual z flag
+    registers1.flags->H = 0;
 
-    cycles(4);
+    cycles(1);
+    (*registers1.PC) +=1;
 }
 
 void Cpu::execute_interrupt() {
@@ -1951,29 +1968,4 @@ void Cpu::execute_interrupt() {
             ime = false;
         }
     }
-}
-
-void Cpu::daa() {
-    if (!registers1.flags->N) {
-        if (registers1.flags->C || *registers1.A > 0x99) {
-            *registers1.A += 0x60;
-            registers1.flags->C = 1;
-        }
-        if (registers1.flags->H || (*registers1.A & 0x0f) > 0x09) {
-            *registers1.A += 0x6;
-        }
-    } else {
-        if (registers1.flags->C) {
-            *registers1.A -= 0x60;
-        }
-        if (registers1.flags->H) {
-            *registers1.A -= 0x6;
-        }
-    }
-
-    registers1.flags->Z = *registers1.A == 0; // the usual z flag
-    registers1.flags->H = 0;
-
-    cycles(1);
-    (*registers1.PC) +=1;
 }

@@ -1,4 +1,4 @@
-file1 = open("/Users/sofyanaarrass/Downloads/EpicLog 2.txt", 'r')
+file1 = open("/home/sofyan/Downloads/Blargg7.txt", 'r')
 file2 = open("temp_log.txt", 'r')
 x = 0
 while True:

@@ -31,6 +31,7 @@ public:
     Fetcher(uint16_t mapAddr1, uint8_t tileLine1, Bus *bus1);
     uint16_t tileLine;
 
+    void start(uint16_t mapAddr, uint8_t tileLine);
     void tick();
     void readtiledata();
     void pushtofifo();

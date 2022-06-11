@@ -28,8 +28,10 @@ Bus::Bus() {
 
 
     timer = (timer_t2*) &io_registers[4];
-    io_registers[0] = 0x0F;
+    //io_registers[0] = 0x0F;
     ppu_registers = (PPURegisters_t *) &io_registers[0x40];
+    lcd_status = (stat_t *) &io_registers[0x41];
+    pthread_mutex_init(&lock, NULL);
 }
 
 void Bus::read(uint16_t address, uint8_t *buffer) {
@@ -106,6 +108,9 @@ void Bus::write_rom(uint16_t address, uint8_t *buffer) {
 }
 
 void Bus::write_vram(uint16_t address, uint8_t *buffer) {
+    if(address > 0x9800 && address < 0x9BFF){
+        //printf("writing to le tilemap\n");
+    }
     memcpy(&vram[address - VRAM], buffer, 1);
 }
 
@@ -130,7 +135,7 @@ void Bus::write_io_registers(uint16_t address, uint8_t *buffer) {
         timer->timer_tima = 0;
         return;
     }
-    if(address == 0xFF00) return;
+    //if(address == 0xFF00) return;
     memcpy(&io_registers[address - IO_REGISTERS], buffer, 1);
 }
 

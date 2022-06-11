@@ -9,6 +9,8 @@
 #include "../include/logger.h"
 #include "../include/lcd.h"
 
+#define SCALE 4
+
 void *cpu_thread(void *arg){
     Cpu *cpu = (Cpu *)arg;
     uint32_t c = 0;
@@ -21,7 +23,6 @@ void *cpu_thread(void *arg){
             fflush(stdout);
             temp = 0;
             cpu->bus->write(SERIAL_SC, &temp);
-            cpu->count++;
         }
         c++;
     }
@@ -30,27 +31,13 @@ void *cpu_thread(void *arg){
 int main() {
     std::cout << "Hello, World!" << std::endl;
 
-    if(SDL_Init(SDL_INIT_VIDEO) < 0)
-    {
-        printf("Failed to initialize the SDL2 library\n");
-        exit(-1);
-    }
-
-    SDL_Renderer *renderer;
-    SDL_Window *window;
-
-    SDL_CreateWindowAndRenderer(160, 144, 0, &window, &renderer);
-    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
-    SDL_RenderClear(renderer);
-    SDL_RenderPresent(renderer);
-
     pthread_t pthread;
 
     auto *rom = new loader();
     Bus bus;
-    Lcd lcd(160, 144, renderer, &bus);
+    Lcd lcd(160, 144, nullptr, &bus);
 
-    Ppu ppu(&bus, renderer, &lcd);
+    Ppu ppu(&bus, nullptr, &lcd);
 
     Cpu cpu(&bus, &ppu);
     Logger logger(&cpu.registers1, &cpu, false);
@@ -64,19 +51,50 @@ int main() {
     pthread_create(&pthread, NULL, cpu_thread, &cpu);
 
 
-    SDL_UpdateWindowSurface(window);
+    SDL_Event event;
+    SDL_Renderer *renderer;
+    SDL_Window *window;
+    int i;
 
-    SDL_Event e;
+    SDL_Init(SDL_INIT_VIDEO);
+    SDL_CreateWindowAndRenderer(144 * SCALE, 160 * SCALE, 0, &window, &renderer);
+    SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
+    SDL_RenderClear(renderer);
+    SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
+
+
     bool quit = false;
+    uint32_t oldFrame = 10000;
+    uint8_t color, lastColor = 0;
     while (!quit){
-        while (SDL_PollEvent(&e)){
-            if (e.type == SDL_QUIT){
+        while (SDL_PollEvent(&event)){
+            if (event.type == SDL_QUIT){
                 quit = true;
             }
         }
-        if(bus.ppu_registers->ly == 144){
+        if(lcd.render) {
+            pthread_mutex_lock(&bus.lock);
             SDL_RenderClear(renderer);
+
+            printf("frame %u\n", cpu.count);
+            for (int x = 0; x < 160; x++) {
+                for (int y = 0; y < 160; y++) {
+                    color = bus.pixels[y * 160 + x];
+                    if (lastColor != color) {
+                        SDL_SetRenderDrawColor(renderer, 0, color, 0, 255);
+                        lastColor = color;
+                    }
+                    for (i = 0; i < SCALE; i++) {
+                        for (int j = 0; j < SCALE; j++) {
+                            SDL_RenderDrawPoint(renderer, (x - bus.ppu_registers->scx) * SCALE + i,
+                                                (y - bus.ppu_registers->scy) * SCALE + j);
+                        }
+                    }
+                }
+            }
             SDL_RenderPresent(renderer);
+            lcd.render = false;
+            pthread_mutex_unlock(&bus.lock);
         }
     }
 

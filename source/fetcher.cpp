@@ -70,7 +70,7 @@ void Fetcher::pushtofifo() {
 
 void Fetcher::readtileid() {
     tileID = bus->read_v(mapAddr + tileIndex);
-    memset(pixelData, 0, 8);
+    //memset(pixelData, 0, 8);
     state = ReadTileData0;
 }
 

@@ -6,6 +6,7 @@
 #include <cstdlib>
 #include <sys/time.h>
 #include <unistd.h>
+#include <thread>
 #include "../include/cpu.h"
 #include "../include/instructions.h"
 #include "../include/bus.h"
@@ -48,7 +49,7 @@ void Cpu::cycles(uint8_t cycles) {
         ppu->tick();
         ppu->tick();
         ppu->tick();
-        bus->timer->timer_div += 1;
+        bus->timer->timer_div += 4;
         if (bus->timer->timer_tac.timer_enable) {
             uint16_t freq = 0;
             switch (bus->timer->timer_tac.timer_clock) {
@@ -80,10 +81,14 @@ void Cpu::cycles(uint8_t cycles) {
             timeval curTime{};
             gettimeofday(&curTime, NULL);
             auto end = curTime.tv_usec / 1000;
-            //printf("frame don, sleeping for %llu\n", 1500 - (end - start));
-            if(16 > (end - start)) usleep((16 - (end - start)) * 1000);
+            if(16 > (end - start)){
+                //printf("frame don, sleeping for %lu\n", 16 - (end - start));
+                std::this_thread::sleep_for(std::chrono::milliseconds(16 - (end - start)));
+            }
             cycles_done = 0;
             start = curTime.tv_usec / 1000;
+            count++;
+            if(count == 60) count = 0;
         }
     }
 }
@@ -281,11 +286,7 @@ bool Cpu::execute_ld_r_to_r_8(uint8_t instruction) {
     bool addressAUse = false, addressBUse = false;
     uint8_t *regA;
     uint8_t *regB;
-    if (instruction == 0x71) {
-        if (count == 0x17 && (instruction & 0xF8) != 0x70) {
-            uint32_t x = 0;
-        }
-    }
+
     switch (instruction & 0xF8) {
         case 0x40:
             regA = registers1.B;

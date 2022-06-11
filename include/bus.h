@@ -34,6 +34,7 @@
 #include <cstdint>
 #include <cstdio>
 #include <queue>
+#include <pthread.h>
 
 typedef struct interrupts{
     uint8_t vblank : 1;
@@ -43,6 +44,17 @@ typedef struct interrupts{
     uint8_t joypad : 1;
     uint8_t x : 3;
 } interrupts_t;
+
+typedef struct lcdc{
+    uint8_t bg_window_enable : 1;
+    uint8_t obj_enable : 1;
+    uint8_t obj_size : 1;
+    uint8_t bg_tile_map_area : 1;
+    uint8_t bg_window_tile_data_area : 1;
+    uint8_t window_enable : 1;
+    uint8_t window_tile_map_area : 1;
+    uint8_t lcd_ppu_enable : 1;
+} lcdc_t;
 
 typedef struct timer_tac {
     uint8_t timer_clock : 2;
@@ -58,13 +70,24 @@ typedef struct timer{
 } timer_t2;
 
 typedef struct PPURegisters{
-    uint8_t lcdc;
+    lcdc_t lcdc;
     uint8_t lcds;
     uint8_t scy;
     uint8_t scx;
     uint8_t ly;
     uint8_t lyc;
 } PPURegisters_t;
+
+
+typedef struct stat{
+    uint8_t mode : 2;
+    uint8_t lyc_ly_flag : 1;
+    uint8_t hblank_stat_int : 1;
+    uint8_t vblank_stat_int : 1;
+    uint8_t oam_stat_interrupt : 1;
+    uint8_t lyc_ly_stat_interrupt : 1;
+    uint8_t x : 1;
+} stat_t;
 
 class Bus{
 private:
@@ -108,7 +131,9 @@ public:
 
     timer_t2 *timer;
     PPURegisters_t *ppu_registers;
-    std::queue<uint8_t> pixels;
+    stat_t *lcd_status;
+    uint8_t pixels[144 * 160];
+    pthread_mutex_t lock;
 };
 
 #endif //GB_BUS_H

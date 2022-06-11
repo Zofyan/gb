@@ -17,7 +17,8 @@ Lcd::Lcd(uint16_t width1, uint16_t height1, SDL_Renderer *renderer1, Bus *bus1) 
 
 void Lcd::write_pixel(uint16_t x, uint16_t y, uint8_t color) {
     //printf("DEBUG: pixel: x: %u, y: %u, color: %u\n", x, y, colors[color] * 60 + 60);
-    bus->pixels.push(colors[color] * 60 + 60);
-    bus->pixels.push(x);
-    bus->pixels.push(y);
+    pthread_mutex_lock(&bus->lock);
+    if(bus->ppu_registers->scx - x >= 0 && bus->ppu_registers->scx - x < 160 && bus->ppu_registers->scy - y >= 0 && bus->ppu_registers->scy - y < 144)bus->pixels[160 * y + x] = color;
+    pthread_mutex_unlock(&bus->lock);
+    //printf("bus: %lu\n", bus->pixels.size());
 }

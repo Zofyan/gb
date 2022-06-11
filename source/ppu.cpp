@@ -23,6 +23,7 @@ void Ppu::draw_line() {
 }
 
 void Ppu::tick() {
+    ticks++;
     switch (state) {
         case OAMSearch:
             oamfetch();
@@ -44,12 +45,11 @@ void Ppu::tick() {
 void Ppu::oamfetch() {
     if (ticks == 40) {
         state = PixelTransfer;
+        bus->lcd_status->mode = PixelTransfer;
         ticks = 0;
         auto tileLine = bus->ppu_registers->ly % 8;
-        auto tileMapRowAddr = 0x9800 + (uint16_t(bus->ppu_registers->ly/8) * 32);
+        auto tileMapRowAddr = (bus->ppu_registers->lcdc.bg_tile_map_area ? 0x9C00 : 0x9800) + (uint16_t(bus->ppu_registers->ly/8) * 32);
         fetcher->start(tileMapRowAddr, tileLine);
-    } else {
-        ticks++;
     }
 }
 
@@ -66,6 +66,7 @@ void Ppu::pixeltransfer() {
     }
     if (x == 160) {
         state = HBlank;
+        bus->lcd_status->mode = HBlank;
         x = 0;
     }
 
@@ -79,16 +80,22 @@ void Ppu::hblank() {
         bus->ppu_registers->ly++;
         if (bus->ppu_registers->ly == bus->ppu_registers->lyc) {
             bus->interrupt_request->lcd_stat = 1;
+            bus->lcd_status->lyc_ly_stat_interrupt = 1;
+            bus->lcd_status->lyc_ly_flag = 1;
+        } else{
+            bus->lcd_status->lyc_ly_flag = 0;
         }
         if (bus->ppu_registers->ly == 144) {
             state = VBlank;
+            lcd->render = true;
+            bus->lcd_status->mode = VBlank;
+            //printf("render...\n");
             bus->interrupt_request->vblank = 1;
         } else {
             state = OAMSearch;
+            bus->lcd_status->mode = OAMSearch;
         }
 
-    } else {
-        ticks++;
     }
 
 }
@@ -101,8 +108,7 @@ void Ppu::vblank() {
         if (bus->ppu_registers->ly == 153) {
             bus->ppu_registers->ly = 0;
             state = OAMSearch;
+            bus->lcd_status->mode = OAMSearch;
         }
-    } else {
-        ticks++;
     }
 }

@@ -13,10 +13,10 @@
 #ifndef GB_PPU_H
 #define GB_PPU_H
 enum PPUState {
-    OAMSearch,
-    PixelTransfer,
     HBlank,
-    VBlank
+    VBlank,
+    OAMSearch,
+    PixelTransfer
 };
 
 class Ppu {
@@ -27,10 +27,10 @@ private:
     uint16_t x = 0;
     uint16_t y = 0;
     uint16_t ticks;
-    Lcd *lcd;
     Fetcher *fetcher;
     SDL_Renderer *renderer;
 public:
+    Lcd *lcd;
     explicit Ppu(Bus *bus1, SDL_Renderer *renderer1, Lcd *lcd1);
 
     void start();

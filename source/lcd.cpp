@@ -17,6 +17,7 @@ Lcd::Lcd(uint16_t width1, uint16_t height1, SDL_Renderer *renderer1, Bus *bus1) 
 
 void Lcd::write_pixel(uint16_t x, uint16_t y, uint8_t color) {
     //printf("DEBUG: pixel: x: %u, y: %u, color: %u\n", x, y, colors[color] * 60 + 60);
-    SDL_SetRenderDrawColor(renderer, 0,  colors[color] * 60 + 60, 0, 255);
-    SDL_RenderDrawPoint(renderer, x - bus->ppu_registers->scx, y - bus->ppu_registers->scy);
+    bus->pixels.push(colors[color] * 60 + 60);
+    bus->pixels.push(x);
+    bus->pixels.push(y);
 }

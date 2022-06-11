@@ -102,8 +102,6 @@ void Ppu::vblank() {
             bus->ppu_registers->ly = 0;
             state = OAMSearch;
         }
-        SDL_RenderClear(renderer);
-        SDL_RenderPresent(renderer);
     } else {
         ticks++;
     }

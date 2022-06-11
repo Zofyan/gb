@@ -33,6 +33,7 @@
 
 #include <cstdint>
 #include <cstdio>
+#include <queue>
 
 typedef struct interrupts{
     uint8_t vblank : 1;
@@ -107,6 +108,7 @@ public:
 
     timer_t2 *timer;
     PPURegisters_t *ppu_registers;
+    std::queue<uint8_t> pixels;
 };
 
 #endif //GB_BUS_H

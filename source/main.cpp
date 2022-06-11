@@ -42,6 +42,7 @@ int main() {
     SDL_CreateWindowAndRenderer(160, 144, 0, &window, &renderer);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
+    SDL_RenderPresent(renderer);
 
     pthread_t pthread;
 
@@ -72,6 +73,10 @@ int main() {
             if (e.type == SDL_QUIT){
                 quit = true;
             }
+        }
+        if(bus.ppu_registers->ly == 144){
+            SDL_RenderClear(renderer);
+            SDL_RenderPresent(renderer);
         }
     }
 

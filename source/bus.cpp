@@ -10,7 +10,7 @@
 #include "../include/instructions.h"
 
 Bus::Bus() {
-    rom_0 = (uint8_t*)calloc(ROM_0_END - ROM_0 + 1, 1);
+s    rom_0 = (uint8_t*)calloc(ROM_0_END - ROM_0 + 1, 1);
     rom_n = (uint8_t*)calloc(ROM_N_END - ROM_N + 1, 1);
     vram = (uint8_t*)calloc(VRAM_END - VRAM_END + 1, 1);
     eram = (uint8_t*)calloc(ERAM_END - ERAM + 1, 1);
@@ -27,11 +27,16 @@ Bus::Bus() {
     memset(interrupt_enable, 0, 1);
 
 
+    joypad = (JoyPad_t *) &io_registers[0];
     timer = (timer_t2*) &io_registers[4];
-    //io_registers[0] = 0x0F;
+    io_registers[0] = 0x00;
     ppu_registers = (PPURegisters_t *) &io_registers[0x40];
     lcd_status = (stat_t *) &io_registers[0x41];
     pthread_mutex_init(&lock, NULL);
+
+    sprites = (oam_t*)oam;
+
+    memset(pixels, 0, 144 * 160);
 }
 
 void Bus::read(uint16_t address, uint8_t *buffer) {
@@ -135,8 +140,13 @@ void Bus::write_io_registers(uint16_t address, uint8_t *buffer) {
         timer->timer_tima = 0;
         return;
     }
-    //if(address == 0xFF00) return;
+    if(address == 0xFF00){
+        (*buffer) = ((*buffer) & 0xF0) | (*(uint8_t*)&joypad & 0x0F);
+    }
     memcpy(&io_registers[address - IO_REGISTERS], buffer, 1);
+    if(address == 0xFF46){
+        dma_start(*buffer);
+    }
 }
 
 void Bus::write_hram(uint16_t address, uint8_t *buffer) {
@@ -170,4 +180,34 @@ uint8_t Bus::read_v(uint16_t address) {
 
 void Bus::write_v(uint16_t address, uint8_t value) {
     write(address, &value);
+}
+
+void Bus::dma_start(uint8_t value) {
+    dma_transfer = true;
+    dma_delay = 2;
+    dma_source_base = value * 0x100;
+}
+
+void Bus::dma_tick() {
+    if(!dma_transfer) return;
+    if(dma_delay > 0) {
+        dma_delay--;
+        return;
+    }
+    write_v(0xFE00 + dma_ticks, read_v(dma_source_base + dma_ticks));
+    dma_ticks++;
+    if(dma_ticks == 0xA0){
+        dma_transfer = false;
+        dma_ticks = 0;
+    }
+}
+
+void Bus::read_cpu(uint16_t address, uint8_t *buffer) {
+    if(dma_transfer && (address < HRAM || address > HRAM_END)) return;
+    read(address, buffer);
+}
+
+void Bus::write_cpu(uint16_t address, uint8_t *buffer) {
+    if(dma_transfer && (address < HRAM || address > HRAM_END)) return;
+    write(address, buffer);
 }

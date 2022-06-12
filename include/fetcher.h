@@ -13,7 +13,8 @@ enum FetcherState {
     ReadTileData0,
     ReadTileData1,
     PushToFIFO,
-    ReadTileID
+    ReadTileID,
+    Sleep
 };
 
 class Fetcher {
@@ -23,11 +24,12 @@ private:
     uint16_t ticks;
     uint16_t tileIndex;
     uint16_t mapAddr;
-    uint16_t tileID;
+    uint8_t tileID;
     uint8_t pixelData[16];
 public:
 
-    std::queue<uint8_t> fifo;
+    std::queue<uint8_t> fifo_bg;
+    std::queue<uint8_t> fifo_sprite;
     Fetcher(uint16_t mapAddr1, uint8_t tileLine1, Bus *bus1);
     uint16_t tileLine;
 

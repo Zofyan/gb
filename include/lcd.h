@@ -10,6 +10,13 @@
 #include <cstdint>
 
 
+typedef struct rgba{
+    uint8_t red;
+    uint8_t green;
+    uint8_t blue;
+} rgba_t;
+
+
 
 class Lcd {
 public:
@@ -19,7 +26,8 @@ public:
     uint16_t height;
     SDL_Renderer *renderer;
     bool render = false;
-    uint8_t colors[4];
+    rgba_t colors1[4];
+    rgba_t colors2[4];
 
     void write_pixel(uint16_t x, uint16_t y, uint8_t color);
 };

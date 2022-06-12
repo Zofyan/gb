@@ -49,6 +49,7 @@ void Cpu::cycles(uint8_t cycles) {
         ppu->tick();
         ppu->tick();
         ppu->tick();
+        bus->dma_tick();
         bus->timer->timer_div += 4;
         if (bus->timer->timer_tac.timer_enable) {
             uint16_t freq = 0;
@@ -96,7 +97,7 @@ void Cpu::cycles(uint8_t cycles) {
 bool Cpu::execute_next_instruction() {
     execute_interrupt();
     uint8_t instruction;
-    bus->read(*registers1.PC, &instruction);
+    bus->read_cpu(*registers1.PC, &instruction);
 
     if (execute_ld_r_to_r_8(instruction)) return true;
     if (execute_inc_r_16(instruction)) return true;
@@ -140,7 +141,7 @@ bool Cpu::execute_16bit_ops(uint8_t instruction) {
 
     (*registers1.PC) += 1;
     cycles(1);
-    bus->read(*registers1.PC, &instruction);
+    bus->read_cpu(*registers1.PC, &instruction);
 
     uint8_t *reg = nullptr;
     uint16_t address;
@@ -531,7 +532,7 @@ bool Cpu::execute_ld_r_d8(uint8_t instruction) {
 }
 
 void Cpu::ld_r_d8(uint8_t *reg) {
-    bus->read((*registers1.PC) + 1, reg);
+    bus->read_cpu((*registers1.PC) + 1, reg);
 
     cycles(2);
     (*registers1.PC) += 2;
@@ -558,8 +559,8 @@ bool Cpu::execute_ld_r_d16(uint8_t instruction) {
 }
 
 void Cpu::ld_r_d16(uint16_t *reg) {
-    bus->read((*registers1.PC) + 1, (uint8_t *) reg);
-    bus->read((*registers1.PC) + 2, ((uint8_t *) reg) + 1);
+    bus->read_cpu((*registers1.PC) + 1, (uint8_t *) reg);
+    bus->read_cpu((*registers1.PC) + 2, ((uint8_t *) reg) + 1);
 
     cycles(3);
     (*registers1.PC) += 3;
@@ -619,7 +620,7 @@ bool Cpu::execute_to_m(uint8_t instruction) {
 }
 
 void Cpu::ld_r_to_m_8(uint8_t *reg, uint16_t address) {
-    bus->write(address, reg);
+    bus->write_cpu(address, reg);
 
     cycles(2);
     (*registers1.PC) += 1;
@@ -627,12 +628,12 @@ void Cpu::ld_r_to_m_8(uint8_t *reg, uint16_t address) {
 
 void Cpu::inc_m(uint16_t address) {
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
     registers1.flags->H = CARRY_4_ADD(temp, 1);
 
     temp++;
     registers1.flags->N = 0;
-    bus->write(address, &temp);
+    bus->write_cpu(address, &temp);
 
     registers1.flags->Z = temp == 0x00;
 
@@ -642,13 +643,13 @@ void Cpu::inc_m(uint16_t address) {
 
 void Cpu::dec_m(uint16_t address) {
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
     registers1.flags->H = CARRY_4_SUB(temp, 1);
 
 
     temp--;
     registers1.flags->N = 1;
-    bus->write(address, &temp);
+    bus->write_cpu(address, &temp);
 
     registers1.flags->Z = temp == 0x00;;
 
@@ -658,15 +659,15 @@ void Cpu::dec_m(uint16_t address) {
 
 void Cpu::ld_m_d8(uint16_t address) {
     uint8_t temp;
-    bus->read((*registers1.PC) + 1, &temp);
-    bus->write(address, &temp);
+    bus->read_cpu((*registers1.PC) + 1, &temp);
+    bus->write_cpu(address, &temp);
 
     cycles(3);
     (*registers1.PC) += 2;
 }
 
 void Cpu::ld_m_to_r_8(uint8_t *reg, uint16_t address) {
-    bus->read(address, reg);
+    bus->read_cpu(address, reg);
 
     cycles(2);
     (*registers1.PC) += 1;
@@ -738,7 +739,7 @@ void Cpu::j_cond(flag flag, uint8_t set, bool relative) {
 
 void Cpu::jr() {
     int8_t steps;
-    bus->read((*registers1.PC) + 1, (uint8_t *) &steps);
+    bus->read_cpu((*registers1.PC) + 1, (uint8_t *) &steps);
 
     (*registers1.PC) += steps + 2;
 
@@ -752,8 +753,8 @@ void Cpu::jp(uint16_t *reg) {
         return;
     }
     uint16_t address;
-    bus->read((*registers1.PC) + 1, (uint8_t *) &address);
-    bus->read((*registers1.PC) + 2, ((uint8_t *) &address) + 1);
+    bus->read_cpu((*registers1.PC) + 1, (uint8_t *) &address);
+    bus->read_cpu((*registers1.PC) + 2, ((uint8_t *) &address) + 1);
     (*registers1.PC) = address;
 
     cycles(3);
@@ -872,7 +873,7 @@ void Cpu::cmp_r(const uint8_t *reg) {
 
 void Cpu::add_m(uint16_t address, bool addCarry) {
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
 
     uint8_t oldCarry = registers1.flags->C;
 
@@ -892,7 +893,7 @@ void Cpu::add_m(uint16_t address, bool addCarry) {
 
 void Cpu::sub_m(uint16_t address, bool addCarry) {
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
 
     uint8_t oldCarry = registers1.flags->C;
 
@@ -912,7 +913,7 @@ void Cpu::sub_m(uint16_t address, bool addCarry) {
 
 void Cpu::cmp_m(uint16_t address) {
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
 
     registers1.flags->C = CARRY_8_SUB(*registers1.A, temp);
     registers1.flags->H = CARRY_4_SUB(*registers1.A, temp);
@@ -926,7 +927,7 @@ void Cpu::cmp_m(uint16_t address) {
 
 void Cpu::add_d8(bool addCarry) {
     uint8_t temp;
-    bus->read(*registers1.PC + 1, &temp);
+    bus->read_cpu(*registers1.PC + 1, &temp);
 
     uint8_t oldCarry = registers1.flags->C;
 
@@ -946,7 +947,7 @@ void Cpu::add_d8(bool addCarry) {
 
 void Cpu::sub_d8(bool addCarry) {
     uint8_t temp;
-    bus->read(*registers1.PC + 1, &temp);
+    bus->read_cpu(*registers1.PC + 1, &temp);
 
     uint8_t oldCarry = registers1.flags->C;
 
@@ -966,7 +967,7 @@ void Cpu::sub_d8(bool addCarry) {
 
 void Cpu::cmp_d8() {
     uint8_t temp;
-    bus->read(*registers1.PC + 1, &temp);
+    bus->read_cpu(*registers1.PC + 1, &temp);
 
     registers1.flags->C = CARRY_8_SUB(*registers1.A, temp);
     registers1.flags->H = CARRY_4_SUB(*registers1.A, temp);
@@ -1062,7 +1063,7 @@ void Cpu::and_r(const uint8_t *reg) {
 
 void Cpu::and_m(uint16_t address) {
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
 
     (*registers1.A) &= temp;
 
@@ -1077,7 +1078,7 @@ void Cpu::and_m(uint16_t address) {
 
 void Cpu::and_d8() {
     uint8_t temp;
-    bus->read(*registers1.PC + 1, &temp);
+    bus->read_cpu(*registers1.PC + 1, &temp);
 
     (*registers1.A) &= temp;
 
@@ -1104,7 +1105,7 @@ void Cpu::xor_r(uint8_t *reg) {
 
 void Cpu::xor_m(uint16_t address) {
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
 
     (*registers1.A) ^= temp;
 
@@ -1119,7 +1120,7 @@ void Cpu::xor_m(uint16_t address) {
 
 void Cpu::xor_d8() {
     uint8_t temp;
-    bus->read(*registers1.PC + 1, &temp);
+    bus->read_cpu(*registers1.PC + 1, &temp);
 
     (*registers1.A) ^= temp;
 
@@ -1146,7 +1147,7 @@ void Cpu::or_r(const uint8_t *reg) {
 
 void Cpu::or_m(uint16_t address) {
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
 
     (*registers1.A) |= temp;
 
@@ -1161,7 +1162,7 @@ void Cpu::or_m(uint16_t address) {
 
 void Cpu::or_d8() {
     uint8_t temp;
-    bus->read(*registers1.PC + 1, &temp);
+    bus->read_cpu(*registers1.PC + 1, &temp);
 
     (*registers1.A) |= temp;
 
@@ -1232,10 +1233,10 @@ void Cpu::disable_int() {
 
 void Cpu::ld_r_to_a16m() {
     uint16_t temp;
-    bus->read(*registers1.PC + 1, (uint8_t *) (&temp));
-    bus->read(*registers1.PC + 2, ((uint8_t *) &temp) + 1);
+    bus->read_cpu(*registers1.PC + 1, (uint8_t *) (&temp));
+    bus->read_cpu(*registers1.PC + 2, ((uint8_t *) &temp) + 1);
 
-    bus->write(temp, registers1.A);
+    bus->write_cpu(temp, registers1.A);
 
     cycles(4);
     (*registers1.PC) += 3;
@@ -1243,10 +1244,10 @@ void Cpu::ld_r_to_a16m() {
 
 void Cpu::ld_a16m_to_r() {
     uint16_t temp;
-    bus->read(*registers1.PC + 1, (uint8_t *) (&temp));
-    bus->read(*registers1.PC + 2, ((uint8_t *) &temp) + 1);
+    bus->read_cpu(*registers1.PC + 1, (uint8_t *) (&temp));
+    bus->read_cpu(*registers1.PC + 2, ((uint8_t *) &temp) + 1);
 
-    bus->read(temp, registers1.A);
+    bus->read_cpu(temp, registers1.A);
 
     cycles(4);
     (*registers1.PC) += 3;
@@ -1254,9 +1255,9 @@ void Cpu::ld_a16m_to_r() {
 
 void Cpu::ld_r_to_a8m() {
     uint8_t temp;
-    bus->read(*registers1.PC + 1, &temp);
+    bus->read_cpu(*registers1.PC + 1, &temp);
 
-    bus->write(temp + IO_REGISTERS, registers1.A);
+    bus->write_cpu(temp + IO_REGISTERS, registers1.A);
 
     cycles(3);
     (*registers1.PC) += 2;
@@ -1264,9 +1265,9 @@ void Cpu::ld_r_to_a8m() {
 
 void Cpu::ld_a8m_to_r() {
     uint8_t temp;
-    bus->read(*registers1.PC + 1, &temp);
+    bus->read_cpu(*registers1.PC + 1, &temp);
 
-    bus->read(temp + IO_REGISTERS, registers1.A);
+    bus->read_cpu(temp + IO_REGISTERS, registers1.A);
 
     cycles(3);
     (*registers1.PC) += 2;
@@ -1302,14 +1303,14 @@ bool Cpu::execute_other_ld(uint8_t instruction) {
 }
 
 void Cpu::ld_r_to_cm() {
-    bus->write((*registers1.C) + IO_REGISTERS, registers1.A);
+    bus->write_cpu((*registers1.C) + IO_REGISTERS, registers1.A);
 
     cycles(2);
     (*registers1.PC) += 1;
 }
 
 void Cpu::ld_cm_to_r() {
-    bus->read((*registers1.C) + IO_REGISTERS, registers1.A);
+    bus->read_cpu((*registers1.C) + IO_REGISTERS, registers1.A);
 
     cycles(2);
     (*registers1.PC) += 1;
@@ -1442,8 +1443,8 @@ void Cpu::call() {
 
     bus->push(*registers1.PC, registers1.SP);
 
-    bus->read(temp + 1, ((uint8_t *) registers1.PC));
-    bus->read(temp + 2, ((uint8_t *) registers1.PC) + 1);
+    bus->read_cpu(temp + 1, ((uint8_t *) registers1.PC));
+    bus->read_cpu(temp + 2, ((uint8_t *) registers1.PC) + 1);
 
     cycles(6);
 }
@@ -1527,7 +1528,7 @@ void Cpu::rlc_r(uint8_t *reg) {
 
 void Cpu::rlc_m(uint16_t address) {
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
 
     uint8_t carry = temp >> 7;
 
@@ -1535,7 +1536,7 @@ void Cpu::rlc_m(uint16_t address) {
 
     temp |= carry;
 
-    bus->write(address, &temp);
+    bus->write_cpu(address, &temp);
 
     registers1.flags->Z = temp == 0x00;
     registers1.flags->C = carry;
@@ -1564,7 +1565,7 @@ void Cpu::rrc_r(uint8_t *reg) {
 
 void Cpu::rrc_m(uint16_t address) {
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
 
     uint8_t carry = temp << 7;
 
@@ -1572,7 +1573,7 @@ void Cpu::rrc_m(uint16_t address) {
 
     temp |= carry;
 
-    bus->write(address, &temp);
+    bus->write_cpu(address, &temp);
 
     registers1.flags->Z = temp == 0x00;
     registers1.flags->C = carry >> 7;
@@ -1600,7 +1601,7 @@ void Cpu::rl_r(uint8_t *reg) {
 
 void Cpu::rl_m(uint16_t address) {
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
 
     uint8_t carry = temp >> 7;
 
@@ -1608,7 +1609,7 @@ void Cpu::rl_m(uint16_t address) {
 
     temp |= registers1.flags->C;
 
-    bus->write(address, &temp);
+    bus->write_cpu(address, &temp);
 
     registers1.flags->Z = temp == 0x00;
     registers1.flags->C = carry;
@@ -1637,7 +1638,7 @@ void Cpu::rr_r(uint8_t *reg) {
 
 void Cpu::rr_m(uint16_t address) {
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
 
     uint8_t carry = temp << 7;
 
@@ -1645,7 +1646,7 @@ void Cpu::rr_m(uint16_t address) {
 
     temp |= registers1.flags->C << 7;
 
-    bus->write(address, &temp);
+    bus->write_cpu(address, &temp);
 
     registers1.flags->Z = temp == 0x00;
     registers1.flags->C = carry >> 7;
@@ -1666,10 +1667,10 @@ void Cpu::sla_m(uint16_t address) {
     rlc_m(address);
 
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
     temp &= 0xFE;
     registers1.flags->Z = temp == 0x00;
-    bus->write(address, &temp);
+    bus->write_cpu(address, &temp);
 }
 
 void Cpu::srl_r(uint8_t *reg) {
@@ -1682,10 +1683,10 @@ void Cpu::srl_m(uint16_t address) {
     rrc_m(address);
 
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
     temp &= 0x7F;
     registers1.flags->Z = temp == 0x00;
-    bus->write(address, &temp);
+    bus->write_cpu(address, &temp);
 }
 
 void Cpu::sra_r(uint8_t *reg) {
@@ -1700,12 +1701,12 @@ void Cpu::sra_m(uint16_t address) {
     rrc_m(address);
 
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
     uint8_t previous_state = temp >> 7;
     if (previous_state == 1) temp |= 0x80;
     else temp &= 0x7F;
     registers1.flags->Z = temp == 0x00;
-    bus->write(address, &temp);
+    bus->write_cpu(address, &temp);
 }
 
 bool Cpu::execute_add_r(uint8_t instruction) {
@@ -1758,13 +1759,13 @@ void Cpu::swap_r(uint8_t *reg) {
 
 void Cpu::swap_m(uint16_t address) {
     uint8_t temp2;
-    bus->read(address, &temp2);
+    bus->read_cpu(address, &temp2);
 
     uint8_t temp = temp2 >> 4;
     temp2 <<= 4;
     temp2 |= temp;
 
-    bus->write(address, &temp2);
+    bus->write_cpu(address, &temp2);
 
     registers1.flags->Z = temp2 == 0x00;
     registers1.flags->H = 0;
@@ -1788,7 +1789,7 @@ void Cpu::bit_r(uint8_t *reg, uint8_t n) {
 
 void Cpu::bit_m(uint16_t address, uint8_t n) {
     uint8_t temp2;
-    bus->read(address, &temp2);
+    bus->read_cpu(address, &temp2);
 
     uint8_t temp = (temp2) & (0x1 << n);
 
@@ -1809,11 +1810,11 @@ void Cpu::reset_r(uint8_t *reg, uint8_t n) {
 
 void Cpu::reset_m(uint16_t address, uint8_t n) {
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
 
     temp &= ~(0x1 << n);
 
-    bus->write(address, &temp);
+    bus->write_cpu(address, &temp);
 
     cycles(3);
     (*registers1.PC) += 1;
@@ -1828,11 +1829,11 @@ void Cpu::set_r(uint8_t *reg, uint8_t n) {
 
 void Cpu::set_m(uint16_t address, uint8_t n) {
     uint8_t temp;
-    bus->read(address, &temp);
+    bus->read_cpu(address, &temp);
 
     temp |= 0x01 << n;
 
-    bus->write(address, &temp);
+    bus->write_cpu(address, &temp);
 
     cycles(3);
     (*registers1.PC) += 1;
@@ -1847,7 +1848,7 @@ void Cpu::ld_hl_sp() {
 
 void Cpu::add_sp_s8() {
     int8_t temp;
-    bus->read(*registers1.PC + 1, (uint8_t *) &temp);
+    bus->read_cpu(*registers1.PC + 1, (uint8_t *) &temp);
 
     registers1.flags->C = CARRY_8_ADD(*registers1.SP, temp);
     registers1.flags->H = CARRY_4_ADD(*registers1.SP, temp);
@@ -1863,7 +1864,7 @@ void Cpu::add_sp_s8() {
 
 void Cpu::ld_hl_sp_s8() {
     int8_t temp;
-    bus->read(*registers1.PC + 1, (uint8_t *) &temp);
+    bus->read_cpu(*registers1.PC + 1, (uint8_t *) &temp);
 
     registers1.flags->C = CARRY_8_ADD(*registers1.SP, temp);
     registers1.flags->H = CARRY_4_ADD(*registers1.SP, temp);
@@ -1901,11 +1902,11 @@ void Cpu::c_flag(bool set) {
 
 void Cpu::ld_sp_to_a16() {
     uint16_t address;
-    bus->read(*registers1.PC + 1, (uint8_t *) &address);
-    bus->read(*registers1.PC + 2, ((uint8_t *) &address) + 1);
+    bus->read_cpu(*registers1.PC + 1, (uint8_t *) &address);
+    bus->read_cpu(*registers1.PC + 2, ((uint8_t *) &address) + 1);
 
-    bus->write(address + 1, ((uint8_t *) registers1.SP) + 1);
-    bus->write(address, ((uint8_t *) registers1.SP));
+    bus->write_cpu(address + 1, ((uint8_t *) registers1.SP) + 1);
+    bus->write_cpu(address, ((uint8_t *) registers1.SP));
 
     cycles(5);
     (*registers1.PC) += 3;

@@ -35,6 +35,7 @@
 #include <cstdio>
 #include <queue>
 #include <pthread.h>
+#include "oam.h"
 
 typedef struct interrupts{
     uint8_t vblank : 1;
@@ -78,6 +79,15 @@ typedef struct PPURegisters{
     uint8_t lyc;
 } PPURegisters_t;
 
+typedef struct JoyPad{
+    uint8_t right : 1;
+    uint8_t left : 1;
+    uint8_t up : 1;
+    uint8_t down : 1;
+    uint8_t direction : 1;
+    uint8_t action : 1;
+    uint8_t x : 2;
+} JoyPad_t;
 
 typedef struct stat{
     uint8_t mode : 2;
@@ -121,19 +131,32 @@ public:
     Bus();
     void load_rom(FILE *rom);
     void read(uint16_t address, uint8_t *buffer);
+    void read_cpu(uint16_t address, uint8_t *buffer);
     uint8_t read_v(uint16_t address);
     void write(uint16_t address, uint8_t *buffer);
+    void write_cpu(uint16_t address, uint8_t *buffer);
     void write_v(uint16_t address, uint8_t value);
     void push(uint16_t value, uint16_t *sp);
     uint16_t pop(uint16_t *sp);
+
+    bool dma_transfer = false;
+    uint16_t dma_ticks = 0;
+    int16_t dma_delay = 0;
+    uint16_t dma_source_base = 0;
+    void dma_tick();
+    void dma_start(uint8_t value);
+
     interrupts_t *interrupt_enable;
     interrupts_t *interrupt_request;
 
     timer_t2 *timer;
     PPURegisters_t *ppu_registers;
     stat_t *lcd_status;
-    uint8_t pixels[144 * 160];
+    JoyPad_t *joypad;
+    uint8_t pixels[144 * 160 * 4];
     pthread_mutex_t lock;
+
+    oam_t *sprites;
 };
 
 #endif //GB_BUS_H

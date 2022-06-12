@@ -17,7 +17,7 @@ typedef struct oam{
     uint8_t flip_x : 1;
     uint8_t flip_y : 1;
     uint8_t palette : 1;
-} oam;
+} oam_t;
 
 
 #endif //GB_OAM_H

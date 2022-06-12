@@ -39,7 +39,14 @@ void Fetcher::tick() {
 }
 
 void Fetcher::readtiledata() {
-    uint16_t offset = VRAM + (tileID * 16);
+    uint16_t offset;
+    if(bus->ppu_registers->lcdc.bg_window_tile_data_area){
+        offset = 0x8000;
+        offset += ((uint8_t)tileID * 16);
+    }else{
+        offset = 0x9000;
+        offset += (((int8_t)tileID) * 16);
+    }
     uint16_t addr = offset + (tileLine * 2);
     uint8_t data = bus->read_v(addr + (state == ReadTileData1));
 
@@ -55,12 +62,12 @@ void Fetcher::readtiledata() {
 }
 
 void Fetcher::pushtofifo() {
-    if(fifo.size() <= 8){
+    if(fifo_bg.size() <= 8){
         // We stored pixel bits from least significant (rightmost) to most
         // (leftmost) in the data array, so we must push them in reverse
         // order.
         for(int8_t i = 7; i >= 0; i--){
-            fifo.push(pixelData[i]);
+            fifo_bg.push(pixelData[i]);
         }
         // Advance to the next tile in the map's row.
         tileIndex++;
@@ -70,7 +77,7 @@ void Fetcher::pushtofifo() {
 
 void Fetcher::readtileid() {
     tileID = bus->read_v(mapAddr + tileIndex);
-    //memset(pixelData, 0, 8);
+    memset(pixelData, 0, 8);
     state = ReadTileData0;
 }
 
@@ -79,6 +86,6 @@ void Fetcher::start(uint16_t mapAddr1, uint8_t tileLine1) {
     mapAddr = mapAddr1;
     tileLine = tileLine1;
     state = ReadTileID;
-    while(!fifo.empty()){fifo.pop();}
+    while(!fifo_bg.empty()){fifo_bg.pop();}
 }
 

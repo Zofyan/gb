@@ -10,10 +10,15 @@
 #include "../include/instructions.h"
 
 Bus::Bus() {
+    for(int i = 0; i < 256; i++){
+        roms[i] = (uint8_t*)calloc(ROM_N_END - ROM_N + 1, 1);
+        erams[i] = (uint8_t*)calloc(ERAM_END - ERAM + 1, 1);
+    }
+
     rom_0 = (uint8_t*)calloc(ROM_0_END - ROM_0 + 1, 1);
-    rom_n = (uint8_t*)calloc(ROM_N_END - ROM_N + 1, 1);
+    rom_n = roms[0];
     vram = (uint8_t*)calloc(VRAM_END - VRAM + 1, 1);
-    eram = (uint8_t*)calloc(ERAM_END - ERAM + 1, 1);
+    eram = erams[0];
     wram_0 = (uint8_t*)calloc(WRAM_0_END - WRAM_0 + 1, 1);
     wram_n = (uint8_t*)calloc(WRAM_N_END - WRAM_N + 1, 1);
     oam = (uint8_t*)calloc(OAM_END - OAM + 1, 1);
@@ -56,7 +61,15 @@ void Bus::read(uint16_t address, uint8_t *buffer) {
 }
 
 void Bus::write(uint16_t address, uint8_t *buffer) {
-    if(address <= ROM_N_END) write_rom(address, buffer);
+    if(address <= 0x1FFF) ram = 0x0A == ((*buffer) & 0x0F);
+    else if(address <= 0x3FFF){
+        if((*buffer) == 0x00) (*buffer) = 0x01;
+        if(rom_size <= 0x4000 * 32) (*buffer) &= 0x0F;
+        (*buffer) &= 0x1F;
+        rom_n = roms[*buffer];
+    }
+
+    else if(address <= ROM_N_END) write_rom(address, buffer);
     else if(address <= VRAM_END) write_vram(address, buffer);
     else if(address <= ERAM_END) write_eram(address, buffer);
     else if(address <= WRAM_N_END) write_wram(address, buffer);
@@ -160,11 +173,6 @@ void Bus::write_hram(uint16_t address, uint8_t *buffer) {
     memcpy(&hram[address - HRAM], buffer, 1);
 }
 
-void Bus::load_rom(FILE *rom) {
-    fread(rom_0, 1, ROM_0_END - ROM_0 + 1, rom);
-    fread(rom_n, 1, ROM_N_END - ROM_N + 1, rom);
-}
-
 void Bus::push(uint16_t value, uint16_t *sp) {
     write(*sp - 1, ((uint8_t *) (&value)) + 1);
     write(*sp - 2, (uint8_t *) (&value));
@@ -218,3 +226,18 @@ void Bus::write_cpu(uint16_t address, uint8_t *buffer) {
     if(dma_transfer && (address < HRAM || address > HRAM_END)) return;
     write(address, buffer);
 }
+
+uint8_t *Bus::get_buffer(uint16_t address) {
+    if(address <= ROM_0_END) return &rom_0[address - ROM_0];
+    else if(address <= ROM_N_END) return &rom_n[address - ROM_N];
+    else if(address <= VRAM_END) return &vram[address - ROM_N];
+    else if(address <= ERAM_END) return &eram[address - ROM_N];
+    else if(address <= WRAM_0_END) return &wram_0[address - ROM_0];
+    else if(address <= WRAM_N_END) return &wram_n[address - ROM_N];
+    else if(address < OAM) return nullptr;
+    else if(address <= OAM_END) return &oam[address - OAM];
+    else if(address < IO_REGISTERS) return nullptr;
+    else if(address <= IO_REGISTERS_END) return &io_registers[address - IO_REGISTERS];
+    else if(address <= HRAM_END) return &hram[address - HRAM];
+    else if(address <= INT_ENABLE_END) return &int_enable[address - INT_ENABLE];
+    else exit(8);}

@@ -37,6 +37,17 @@
 #include <pthread.h>
 #include "oam.h"
 
+
+enum mbc_t{
+    MBC0,
+    MBC1,
+    MBC2,
+    MBC3,
+    MBC5,
+    MBC6,
+    MBC7
+};
+
 typedef struct interrupts{
     uint8_t vblank : 1;
     uint8_t lcd_stat : 1;
@@ -128,8 +139,12 @@ private:
     void write_hram(uint16_t address, uint8_t *buffer);
     void write_int_enable(uint16_t address, uint8_t *buffer);
 public:
+    uint8_t *roms[256];
+    uint8_t *erams[256];
+    uint32_t rom_size = 0;
+    bool ram = false;
+    mbc_t mbc = MBC0;
     Bus();
-    void load_rom(FILE *rom);
     void read(uint16_t address, uint8_t *buffer);
     void read_cpu(uint16_t address, uint8_t *buffer);
     uint8_t read_v(uint16_t address);
@@ -158,6 +173,8 @@ public:
     pthread_mutex_t lock;
 
     oam_t *sprites[40];
+
+    uint8_t *get_buffer(uint16_t address);
 };
 
 #endif //GB_BUS_H

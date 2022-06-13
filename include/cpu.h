@@ -157,6 +157,7 @@ private:
 
 public:
     bool ime = true;
+    bool stop = false;
     uint64_t start;
     uint32_t count = 0;
     uint64_t cycles_done = 0;

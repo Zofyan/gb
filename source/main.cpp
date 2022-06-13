@@ -63,8 +63,8 @@ int main() {
 
     pthread_t pthread;
 
-    auto *rom = new loader();
     Bus bus;
+    auto *rom = new Loader(&bus);
     Lcd lcd(160, 144, nullptr, &bus);
 
     Ppu ppu(&bus, nullptr, &lcd);
@@ -72,10 +72,8 @@ int main() {
     Cpu cpu(&bus, &ppu);
     Logger logger(&cpu.registers1, &cpu, false);
 
-    FILE *openrom, *openlog;
-    openrom = fopen(rom->filename, "r");
+    FILE *openlog;
     //openlog = fopen("../temp_log.txt", "w");
-    bus.load_rom(openrom);
 
 
     pthread_create(&pthread, NULL, cpu_thread, &cpu);
@@ -118,34 +116,42 @@ int main() {
                 case SDLK_a:
                     bus.joypad_real1.left_b = press;
                     bus.interrupt_request->joypad = !press;
+                    cpu.stop = press;
                     break;
                 case SDLK_s:
                     bus.joypad_real1.down_start = press;
                     bus.interrupt_request->joypad = !press;
+                    cpu.stop = press;
                     break;
                 case SDLK_w:
                     bus.joypad_real1.up_select = press;
                     bus.interrupt_request->joypad = !press;
+                    cpu.stop = press;
                     break;
                 case SDLK_d:
                     bus.joypad_real1.right_a = press;
                     bus.interrupt_request->joypad = !press;
+                    cpu.stop = press;
                     break;
                 case SDLK_e:
                     bus.joypad_real2.up_select = press;
                     bus.interrupt_request->joypad = !press;
+                    cpu.stop = press;
                     break;
                 case SDLK_x:
                     bus.joypad_real2.left_b = press;
                     bus.interrupt_request->joypad = !press;
+                    cpu.stop = press;
                     break;
                 case SDLK_r:
                     bus.joypad_real2.down_start = press;
                     bus.interrupt_request->joypad = !press;
+                    cpu.stop = press;
                     break;
                 case SDLK_c:
                     bus.joypad_real2.right_a = press;
                     bus.interrupt_request->joypad = !press;
+                    cpu.stop = press;
                     break;
                 default:
                     break;

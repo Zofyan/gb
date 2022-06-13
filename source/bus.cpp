@@ -66,9 +66,8 @@ void Bus::write(uint16_t address, uint8_t *buffer) {
         if((*buffer) == 0x00) (*buffer) = 0x01;
         if(rom_size <= 0x4000 * 32) (*buffer) &= 0x0F;
         (*buffer) &= 0x1F;
-        rom_n = roms[*buffer];
+        rom_n = roms[*buffer - 1];
     }
-
     else if(address <= ROM_N_END) write_rom(address, buffer);
     else if(address <= VRAM_END) write_vram(address, buffer);
     else if(address <= ERAM_END) write_eram(address, buffer);
@@ -230,10 +229,10 @@ void Bus::write_cpu(uint16_t address, uint8_t *buffer) {
 uint8_t *Bus::get_buffer(uint16_t address) {
     if(address <= ROM_0_END) return &rom_0[address - ROM_0];
     else if(address <= ROM_N_END) return &rom_n[address - ROM_N];
-    else if(address <= VRAM_END) return &vram[address - ROM_N];
-    else if(address <= ERAM_END) return &eram[address - ROM_N];
-    else if(address <= WRAM_0_END) return &wram_0[address - ROM_0];
-    else if(address <= WRAM_N_END) return &wram_n[address - ROM_N];
+    else if(address <= VRAM_END) return &vram[address - VRAM];
+    else if(address <= ERAM_END) return &eram[address - ERAM];
+    else if(address <= WRAM_0_END) return &wram_0[address - WRAM_0];
+    else if(address <= WRAM_N_END) return &wram_n[address - WRAM_N];
     else if(address < OAM) return nullptr;
     else if(address <= OAM_END) return &oam[address - OAM];
     else if(address < IO_REGISTERS) return nullptr;

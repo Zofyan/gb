@@ -107,7 +107,7 @@ int main() {
     uint8_t color, lastColor = 0;
     while (!quit) {
         while (SDL_PollEvent(&event)) {
-            press = false;
+            press = true;
             if (event.type == SDL_KEYDOWN) {
                 press = false;
             }

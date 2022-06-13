@@ -103,10 +103,10 @@ void Bus::read_io_registers(uint16_t address, uint8_t *buffer) {
     memcpy(buffer, &io_registers[address - IO_REGISTERS], 1);
     if(address == 0xFF00){
         if(joypad->direction){
-            (*buffer) = ((*buffer) & 0xF0) | (*(uint8_t*)&joypad_real1 & 0x0F);
+            (*buffer) = ((*buffer) & 0xF0) | (*(uint8_t*)&joypad_real2 & 0x0F);
         }
         if(joypad->action){
-            (*buffer) = ((*buffer) & 0xF0) | (*(uint8_t*)&joypad_real2 & 0x0F);
+            (*buffer) = ((*buffer) & 0xF0) | (*(uint8_t*)&joypad_real1 & 0x0F);
         }
     }
 }

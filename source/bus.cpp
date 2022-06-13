@@ -12,7 +12,7 @@
 Bus::Bus() {
     rom_0 = (uint8_t*)calloc(ROM_0_END - ROM_0 + 1, 1);
     rom_n = (uint8_t*)calloc(ROM_N_END - ROM_N + 1, 1);
-    vram = (uint8_t*)calloc(VRAM_END - VRAM_END + 1, 1);
+    vram = (uint8_t*)calloc(VRAM_END - VRAM + 1, 1);
     eram = (uint8_t*)calloc(ERAM_END - ERAM + 1, 1);
     wram_0 = (uint8_t*)calloc(WRAM_0_END - WRAM_0 + 1, 1);
     wram_n = (uint8_t*)calloc(WRAM_N_END - WRAM_N + 1, 1);

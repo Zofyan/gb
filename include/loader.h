@@ -22,7 +22,7 @@ class loader {
         //char filename[100] = "../../gb-test-roms/cpu_instrs/cpu_instrs.gb";
         //char filename[100] = "../Tetris.gb";
         //char filename[100] = "../Tennis (JUE) [!].gb";
-        char filename[100] = "/home/sofyan/CLionProjects/gb/Dr. Mario (World).gb";
+        char filename[100] = "../Dr. Mario (World).gb";
 };
 
 

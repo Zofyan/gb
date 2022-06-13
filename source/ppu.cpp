@@ -52,7 +52,7 @@ void Ppu::oamfetch() {
 
         uint8_t count = 0;
         for(int i = 0; i < 40; i++){
-            if((uint8_t)(bus->ppu_registers->ly - (bus->sprites[i]->position_y - 16)) < 8){
+            if((uint8_t)(bus->ppu_registers->ly - (bus->sprites[i]->position_y - 16)) < (bus->ppu_registers->lcdc.obj_size ? 16 : 8)){
                 oams[i] = *bus->sprites[i];
                 oams[i].position_x -= 8;
                 if(count++ >= 10) break;
@@ -74,16 +74,29 @@ void Ppu::pixeltransfer() {
         bool bg_priority = true;
         for(int i = 0; i < 40; i++){
             oam = oams[i];
-            if((uint8_t)(x - oam.position_x) < 8 && !oam.priority){
+            if((uint8_t)(x - oam.position_x) < 8 && !oam.priority && bus->ppu_registers->lcdc.obj_enable){
                 uint16_t offset;
                 offset = 0x8000;
-                offset += ((uint8_t)oam.tile_index * 16);
-                uint16_t addr = offset + ((bus->ppu_registers->ly + 16 - oam.position_y) * 2);
+                if(bus->ppu_registers->lcdc.obj_size) {
+                    if((uint8_t)(bus->ppu_registers->ly - (bus->sprites[i]->position_y - 16)) < 8){
+                        offset += ((uint8_t)(oam.tile_index & 0xFE) * 16);
+                    } else{
+                        offset += ((uint8_t)((oam.tile_index & 0xFE) + 1) * 16);
+                    }
+                }
+                else offset += ((uint8_t)oam.tile_index * 16);
+
+                uint16_t addr = offset;
+                if(oam.flip_y) addr += (( 8 - (bus->ppu_registers->ly + 16 - oam.position_y)) * 2);
+                else addr += ((bus->ppu_registers->ly + 16 - oam.position_y) * 2);
+
+                uint8_t bit_shift = 7 - (x - oam.position_x);
+                if(oam.flip_x) bit_shift = x - oam.position_x;
 
                 uint8_t data = bus->read_v(addr);
-                sprite_pixel = ((data >> ((7 - x + oam.position_x))) & 0x1);
+                sprite_pixel = ((data >> bit_shift) & 0x1);
                 data = bus->read_v(addr + 1);
-                sprite_pixel |= ((data >> ((7 - x + oam.position_x))) & 0x1) << 1;
+                sprite_pixel |= ((data >> bit_shift) & 0x1) << 1;
                 lcd->write_pixel(x, bus->ppu_registers->ly, sprite_pixel, oam.palette, true);
                 if(sprite_pixel) bg_priority = oam.priority;
             }

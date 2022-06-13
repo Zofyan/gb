@@ -34,6 +34,8 @@ Bus::Bus() {
 
     timer = (timer_t2*) &io_registers[4];
     joypad = (JoyPad*) &io_registers[0];
+    memset(&joypad_real1, 0xFF, 1);
+    memset(&joypad_real2, 0xFF, 1);
 
     ppu_registers = (PPURegisters_t *) &io_registers[0x40];
     lcd_status = (stat_t *) &io_registers[0x41];
@@ -67,6 +69,10 @@ void Bus::write(uint16_t address, uint8_t *buffer) {
         if(rom_size <= 0x4000 * 32) (*buffer) &= 0x0F;
         (*buffer) &= 0x1F;
         rom_n = roms[*buffer - 1];
+    }
+    else if(address <= 0x5FFF){
+        (*buffer) &= 0x03;
+        eram = erams[(*buffer) - 1];
     }
     else if(address <= ROM_N_END) write_rom(address, buffer);
     else if(address <= VRAM_END) write_vram(address, buffer);

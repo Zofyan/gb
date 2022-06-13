@@ -82,9 +82,9 @@ void Cpu::cycles(uint8_t cycles) {
             timeval curTime{};
             gettimeofday(&curTime, NULL);
             auto end = curTime.tv_usec / 1000;
-            if(3 > (end - start)){
+            if(16 > (end - start)){
                 //printf("frame don, sleeping for %lu\n", 16 - (end - start));
-                std::this_thread::sleep_for(std::chrono::milliseconds(3 - (end - start)));
+                std::this_thread::sleep_for(std::chrono::milliseconds(16 - (end - start)));
             }
             cycles_done = 0;
             start = curTime.tv_usec / 1000;

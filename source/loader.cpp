@@ -49,5 +49,12 @@ Loader::Loader(Bus *bus) {
                 if(temp == 0) break;
             }
             break;
+        case 0x13:
+            for(int i = 0; i < 128; i++){
+                uint16_t temp = fread(bus->roms[i], 1, ROM_N_END - ROM_N + 1, rom);
+                printf("read %04X to rom %i\n", temp, i);
+                if(temp == 0) break;
+            }
+            break;
     }
 }

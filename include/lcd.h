@@ -29,7 +29,7 @@ public:
     rgba_t colors1[4];
     rgba_t colors2[4];
 
-    void write_pixel(uint16_t x, uint16_t y, uint8_t color);
+    void write_pixel(uint16_t x, uint16_t y, uint8_t color, uint8_t pallete = 0, bool sprite = false);
 };
 
 

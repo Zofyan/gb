@@ -20,6 +20,7 @@ enum FetcherState {
 class Fetcher {
 private:
     Bus *bus;
+    std::queue<oam_t> oams;
     FetcherState state;
     uint16_t ticks;
     uint16_t tileIndex;

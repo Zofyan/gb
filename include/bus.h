@@ -80,10 +80,10 @@ typedef struct PPURegisters{
 } PPURegisters_t;
 
 typedef struct JoyPad{
-    uint8_t right : 1;
-    uint8_t left : 1;
-    uint8_t up : 1;
-    uint8_t down : 1;
+    uint8_t right_a : 1;
+    uint8_t left_b : 1;
+    uint8_t up_select : 1;
+    uint8_t down_start : 1;
     uint8_t direction : 1;
     uint8_t action : 1;
     uint8_t x : 2;
@@ -153,10 +153,11 @@ public:
     PPURegisters_t *ppu_registers;
     stat_t *lcd_status;
     JoyPad_t *joypad;
+    JoyPad_t joypad_real1, joypad_real2;
     uint8_t pixels[144 * 160 * 4];
     pthread_mutex_t lock;
 
-    oam_t *sprites;
+    oam_t *sprites[40];
 };
 
 #endif //GB_BUS_H

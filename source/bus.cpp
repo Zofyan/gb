@@ -10,7 +10,7 @@
 #include "../include/instructions.h"
 
 Bus::Bus() {
-s    rom_0 = (uint8_t*)calloc(ROM_0_END - ROM_0 + 1, 1);
+    rom_0 = (uint8_t*)calloc(ROM_0_END - ROM_0 + 1, 1);
     rom_n = (uint8_t*)calloc(ROM_N_END - ROM_N + 1, 1);
     vram = (uint8_t*)calloc(VRAM_END - VRAM_END + 1, 1);
     eram = (uint8_t*)calloc(ERAM_END - ERAM + 1, 1);
@@ -27,14 +27,16 @@ s    rom_0 = (uint8_t*)calloc(ROM_0_END - ROM_0 + 1, 1);
     memset(interrupt_enable, 0, 1);
 
 
-    joypad = (JoyPad_t *) &io_registers[0];
     timer = (timer_t2*) &io_registers[4];
-    io_registers[0] = 0x00;
+    joypad = (JoyPad*) &io_registers[0];
+
     ppu_registers = (PPURegisters_t *) &io_registers[0x40];
     lcd_status = (stat_t *) &io_registers[0x41];
     pthread_mutex_init(&lock, NULL);
 
-    sprites = (oam_t*)oam;
+    for(int i = 0; i < 40; i++){
+        sprites[i] = (oam_t *)(&oam[i * 4]);
+    }
 
     memset(pixels, 0, 144 * 160);
 }
@@ -99,6 +101,14 @@ void Bus::read_oam(uint16_t address, uint8_t *buffer) {
 
 void Bus::read_io_registers(uint16_t address, uint8_t *buffer) {
     memcpy(buffer, &io_registers[address - IO_REGISTERS], 1);
+    if(address == 0xFF00){
+        if(joypad->direction){
+            (*buffer) = ((*buffer) & 0xF0) | (*(uint8_t*)&joypad_real1 & 0x0F);
+        }
+        if(joypad->action){
+            (*buffer) = ((*buffer) & 0xF0) | (*(uint8_t*)&joypad_real2 & 0x0F);
+        }
+    }
 }
 
 void Bus::read_hram(uint16_t address, uint8_t *buffer) {
@@ -113,9 +123,6 @@ void Bus::write_rom(uint16_t address, uint8_t *buffer) {
 }
 
 void Bus::write_vram(uint16_t address, uint8_t *buffer) {
-    if(address > 0x9800 && address < 0x9BFF){
-        //printf("writing to le tilemap\n");
-    }
     memcpy(&vram[address - VRAM], buffer, 1);
 }
 
@@ -141,7 +148,7 @@ void Bus::write_io_registers(uint16_t address, uint8_t *buffer) {
         return;
     }
     if(address == 0xFF00){
-        (*buffer) = ((*buffer) & 0xF0) | (*(uint8_t*)&joypad & 0x0F);
+        (*buffer) = ((*buffer) & 0xF0) | ((*(uint8_t*)joypad) & 0x0F);
     }
     memcpy(&io_registers[address - IO_REGISTERS], buffer, 1);
     if(address == 0xFF46){

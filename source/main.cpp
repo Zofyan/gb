@@ -12,13 +12,16 @@
 
 #define SCALE 4
 
-void *cpu_thread(void *arg){
-    Cpu *cpu = (Cpu *)arg;
+void *cpu_thread(void *arg) {
+    Cpu *cpu = (Cpu *) arg;
     uint32_t c = 0;
     uint8_t temp;
-    while(cpu->execute_next_instruction()){
+    Logger logger(&cpu->registers1, cpu, true);
+    //logger.print_instruction();
+    while (cpu->execute_next_instruction()) {
+        //logger.print_instruction();
         cpu->bus->read(SERIAL_SC, &temp);
-        if(temp == 0x81){
+        if (temp == 0x81) {
             cpu->bus->read(SERIAL_SB, &temp);
             printf("%c", temp);
             fflush(stdout);
@@ -54,6 +57,7 @@ void debug_tiledata(SDL_Renderer *renderer, Bus *bus) {
     }
     SDL_RenderPresent(renderer);
 }
+
 int main() {
     std::cout << "Hello, World!" << std::endl;
 
@@ -101,42 +105,57 @@ int main() {
     bool quit = false, press = false;
     uint32_t oldFrame = 10000;
     uint8_t color, lastColor = 0;
-    while (!quit){
-        while (SDL_PollEvent(&event)){
-            if (event.type == SDL_KEYDOWN){
+    while (!quit) {
+        while (SDL_PollEvent(&event)) {
+            press = false;
+            if (event.type == SDL_KEYDOWN) {
                 press = false;
             }
-            if (event.type == SDL_KEYUP){
-                press = false;
+            if (event.type == SDL_KEYUP) {
+                press = true;
             }
             switch (event.key.keysym.sym) {
                 case SDLK_a:
-                    bus.joypad->left = press;
+                    bus.joypad_real1.left_b = press;
+                    bus.interrupt_request->joypad = !press;
                     break;
                 case SDLK_s:
-                    bus.joypad->down = press;
+                    bus.joypad_real1.down_start = press;
+                    bus.interrupt_request->joypad = !press;
                     break;
                 case SDLK_w:
-                    bus.joypad->up = press;
+                    bus.joypad_real1.up_select = press;
+                    bus.interrupt_request->joypad = !press;
                     break;
                 case SDLK_d:
-                    bus.joypad->right = press;
+                    bus.joypad_real1.right_a = press;
+                    bus.interrupt_request->joypad = !press;
+                    break;
+                case SDLK_e:
+                    bus.joypad_real2.up_select = press;
+                    bus.interrupt_request->joypad = !press;
                     break;
                 case SDLK_x:
-                    bus.joypad->direction = press;
+                    bus.joypad_real2.left_b = press;
+                    bus.interrupt_request->joypad = !press;
+                    break;
+                case SDLK_r:
+                    bus.joypad_real2.down_start = press;
+                    bus.interrupt_request->joypad = !press;
                     break;
                 case SDLK_c:
-                    bus.joypad->action = press;
+                    bus.joypad_real2.right_a = press;
+                    bus.interrupt_request->joypad = !press;
                     break;
                 default:
                     break;
 
             }
-            if (event.type == SDL_QUIT){
+            if (event.type == SDL_QUIT) {
                 quit = true;
             }
         }
-        if(cpu.count != oldFrame) {
+        if (cpu.count != oldFrame) {
             pthread_mutex_lock(&bus.lock);
             SDL_RenderClear(renderer);
 

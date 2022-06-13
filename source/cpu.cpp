@@ -50,7 +50,7 @@ void Cpu::cycles(uint8_t cycles) {
         ppu->tick();
         ppu->tick();
         bus->dma_tick();
-        bus->timer->timer_div += 4;
+        bus->timer->timer_div += 1;
         if (bus->timer->timer_tac.timer_enable) {
             uint16_t freq = 0;
             switch (bus->timer->timer_tac.timer_clock) {
@@ -1939,35 +1939,41 @@ void Cpu::daa() {
 
 void Cpu::execute_interrupt() {
     if (ime) {
+        //printf("request: %02X, enable: %02X\n", *(uint8_t*)&bus->interrupt_request, *(uint8_t*)&bus->interrupt_enable);
         if (bus->interrupt_request->vblank && bus->interrupt_enable->vblank) {
             bus->interrupt_request->vblank = 0;
             bus->push(*registers1.PC, registers1.SP);
             (*registers1.PC) = 0x40;
             ime = false;
+            cycles(5);
         }
         if (bus->interrupt_request->lcd_stat && bus->interrupt_enable->lcd_stat) {
             bus->interrupt_request->lcd_stat = 0;
             bus->push(*registers1.PC, registers1.SP);
             (*registers1.PC) = 0x48;
             ime = false;
+            cycles(5);
         }
         if (bus->interrupt_request->timer == 1 && bus->interrupt_enable->timer) {
             bus->interrupt_request->timer = 0;
             bus->push(*registers1.PC, registers1.SP);
             (*registers1.PC) = 0x50;
             ime = false;
+            cycles(5);
         }
         if (bus->interrupt_request->serial && bus->interrupt_enable->serial) {
             bus->interrupt_request->serial = 0;
             bus->push(*registers1.PC, registers1.SP);
             (*registers1.PC) = 0x58;
             ime = false;
+            cycles(5);
         }
         if (bus->interrupt_request->joypad && bus->interrupt_enable->joypad) {
             bus->interrupt_request->joypad = 0;
             bus->push(*registers1.PC, registers1.SP);
             (*registers1.PC) = 0x60;
             ime = false;
+            cycles(5);
         }
     }
 }

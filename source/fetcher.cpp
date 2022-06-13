@@ -14,7 +14,6 @@ Fetcher::Fetcher(uint16_t mapAddr1, uint8_t tileLine1, Bus *bus1) {
     mapAddr = mapAddr1;
     tileLine = tileLine1;
     state = ReadTileID;
-
 }
 
 void Fetcher::tick() {

@@ -30,6 +30,7 @@ void *cpu_thread(void *arg) {
         }
         c++;
     }
+    return nullptr;
 }
 
 void debug_tiledata(SDL_Renderer *renderer, Bus *bus) {

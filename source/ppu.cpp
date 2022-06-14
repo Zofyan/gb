@@ -39,15 +39,13 @@ void Ppu::tick() {
     }
 }
 
-
-
 void Ppu::oamfetch() {
     if (ticks==40) {
         state = PixelTransfer;
         ticks = 0;
 
         auto tileLine = bus->ppu_registers->ly % 8;
-        auto tileMapRowAddr = (bus->ppu_registers->lcdc.bg_tile_map_area ? 0x9C00 : 0x9800) + (uint16_t(bus->ppu_registers->ly/8) * 32);
+        auto tileMapRowAddr = (bus->ppu_registers->lcdc.bg_tile_map_area ? 0x9C00 : 0x9800) + (bus->ppu_registers->ly / 8) * 32;
         fetcher->start(tileMapRowAddr, tileLine);
 
         uint8_t count = 0;
@@ -63,7 +61,7 @@ void Ppu::oamfetch() {
 
 
 void Ppu::pixeltransfer() {
-    fetcher->tick();
+    fetcher->tick(x);
     uint8_t pixel, sprite_pixel, byte1, byte2, line;
     oam_t oam;
     if (!fetcher->fifo_bg.empty()) {
@@ -72,9 +70,9 @@ void Ppu::pixeltransfer() {
 
         sprite_pixel = 0;
         bool bg_priority = true;
-        for(int i = 0; i < 40; i++){
+        /*for(int i = 0; i < 40; i++){
             oam = oams[i];
-            if((uint8_t)(x - oam.position_x) < 8 && !oam.priority && bus->ppu_registers->lcdc.obj_enable){
+            if((uint8_t)((x - bus->ppu_registers->scx) - oam.position_x) < 8 && !oam.priority && bus->ppu_registers->lcdc.obj_enable){
                 uint16_t offset;
                 offset = 0x8000;
                 if(bus->ppu_registers->lcdc.obj_size) {
@@ -100,7 +98,7 @@ void Ppu::pixeltransfer() {
                 lcd->write_pixel(x, bus->ppu_registers->ly, sprite_pixel, oam.palette, true);
                 if(sprite_pixel) bg_priority = oam.priority;
             }
-        }
+        }*/
         if(bg_priority) lcd->write_pixel(x, bus->ppu_registers->ly, pixel);
         x++;
     }

@@ -31,6 +31,17 @@
 #define INT_REQUEST        0xFF0F
 
 
+#define  size_4MiB   0x400000
+#define  size_2MiB   0x200000
+#define  size_1MiB   0x100000
+#define  size_512KiB 0x80000
+#define  size_256KiB 0x40000
+#define  size_128KiB 0x20000
+#define  size_64KiB  0x1000
+#define  size_32KiB  0x8000
+#define  size_8KiB  0x2000
+
+
 #include <cstdint>
 #include <cstdio>
 #include <queue>
@@ -141,7 +152,9 @@ private:
 public:
     uint8_t *roms[256];
     uint8_t *erams[256];
+    uint32_t rom_number = 1;
     uint32_t rom_size = 0;
+    uint32_t ram_size = 0;
     bool ram = false;
     mbc_t mbc = MBC0;
     Bus();

@@ -15,8 +15,8 @@ Bus::Bus() {
         erams[i] = (uint8_t*)calloc(ERAM_END - ERAM + 1, 1);
     }
 
-    rom_0 = (uint8_t*)calloc(ROM_0_END - ROM_0 + 1, 1);
-    rom_n = roms[0];
+    rom_0 = roms[0];
+    rom_n = roms[1];
     vram = (uint8_t*)calloc(VRAM_END - VRAM + 1, 1);
     eram = erams[0];
     wram_0 = (uint8_t*)calloc(WRAM_0_END - WRAM_0 + 1, 1);
@@ -66,13 +66,30 @@ void Bus::write(uint16_t address, uint8_t *buffer) {
     if(address <= 0x1FFF) ram = 0x0A == ((*buffer) & 0x0F);
     else if(address <= 0x3FFF){
         if((*buffer) == 0x00) (*buffer) = 0x01;
-        if(rom_size <= 0x4000 * 32) (*buffer) &= 0x0F;
-        (*buffer) &= 0x1F;
-        rom_n = roms[*buffer - 1];
+        //if(rom_size <= size_256KiB) (*buffer) &= 0x0F;
+        if(mbc == MBC3) {
+            (*buffer) &= 0x7F;
+            rom_number = (rom_number & 0b10000000) | (*buffer);
+        }
+        if(mbc == MBC1) {
+            (*buffer) &= 0x1F;
+            rom_number = (rom_number & 0b11100000) | (*buffer);
+        }
     }
     else if(address <= 0x5FFF){
-        (*buffer) &= 0x03;
-        eram = erams[(*buffer) - 1];
+        if(mbc == MBC1) {
+            (*buffer) &= 0x03;
+            if (ram_size == size_32KiB) {
+                eram = erams[(*buffer)];
+            }
+            else if (rom_size >= size_1MiB) rom_number = (rom_number & 0b10011111) | ((*buffer) << 5);
+        }
+        if(mbc == MBC3) {
+            if((*buffer) <= 0x03){
+                (*buffer) &= 0x03;
+                eram = erams[(*buffer)];
+            }
+        }
     }
     else if(address <= ROM_N_END) write_rom(address, buffer);
     else if(address <= VRAM_END) write_vram(address, buffer);
@@ -95,7 +112,7 @@ void Bus::read_rom(uint16_t address, uint8_t *buffer) {
     if(address <= ROM_0_END)
         memcpy(buffer, &rom_0[address - ROM_0], 1);
     else
-        memcpy(buffer, &rom_n[address - ROM_N], 1);
+        memcpy(buffer, &roms[rom_number][address - ROM_N], 1);
 }
 
 void Bus::read_vram(uint16_t address, uint8_t *buffer) {

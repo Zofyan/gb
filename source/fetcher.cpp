@@ -16,7 +16,8 @@ Fetcher::Fetcher(uint16_t mapAddr1, uint8_t tileLine1, Bus *bus1) {
     state = ReadTileID;
 }
 
-void Fetcher::tick() {
+void Fetcher::tick(uint8_t x) {
+    lx = x;
     ticks++;
     if(ticks < 2) return;
     ticks = 0;
@@ -70,6 +71,7 @@ void Fetcher::pushtofifo() {
         }
         // Advance to the next tile in the map's row.
         tileIndex++;
+        tileIndex = tileIndex % 32;
         state = ReadTileID;
     }
 }
@@ -81,7 +83,7 @@ void Fetcher::readtileid() {
 }
 
 void Fetcher::start(uint16_t mapAddr1, uint8_t tileLine1) {
-    tileIndex = 0;
+    tileIndex = bus->ppu_registers->scx / 8;
     mapAddr = mapAddr1;
     tileLine = tileLine1;
     state = ReadTileID;

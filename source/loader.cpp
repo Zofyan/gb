@@ -56,7 +56,7 @@ Loader::Loader(Bus *bus) {
             break;
         case 0x02:
         case 0x03:
-            bus->ram = true;
+            bus->eram_enable = true;
         case 0x01:
             bus->mbc = MBC1;
             for(int i = 1; i < 256; i++){

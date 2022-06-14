@@ -155,7 +155,7 @@ public:
     uint32_t rom_number = 1;
     uint32_t rom_size = 0;
     uint32_t ram_size = 0;
-    bool ram = false;
+    bool eram_enable = false;
     mbc_t mbc = MBC0;
     Bus();
     void read(uint16_t address, uint8_t *buffer);

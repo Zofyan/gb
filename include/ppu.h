@@ -34,6 +34,7 @@ private:
     void find_oams();
 public:
     Lcd *lcd;
+    uint8_t x_shift, y_shift;
     explicit Ppu(Bus *bus1, SDL_Renderer *renderer1, Lcd *lcd1);
 
     void start();

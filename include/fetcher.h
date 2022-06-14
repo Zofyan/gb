@@ -28,7 +28,6 @@ private:
     uint16_t mapAddr;
     uint8_t tileID;
     uint8_t pixelData[16];
-    uint8_t lx;
 public:
 
     std::queue<uint8_t> fifo_bg;
@@ -37,7 +36,7 @@ public:
     uint16_t tileLine;
 
     void start(uint16_t mapAddr, uint8_t tileLine);
-    void tick(uint8_t x);
+    void tick();
     void readtiledata();
     void pushtofifo();
     void readtileid();

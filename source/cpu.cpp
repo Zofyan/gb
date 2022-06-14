@@ -1702,15 +1702,9 @@ void Cpu::sra_r(uint8_t *reg) {
 }
 
 void Cpu::sra_m(uint16_t address) {
-    rrc_m(address);
-
-    uint8_t temp;
-    bus->read_cpu(address, &temp);
-    uint8_t previous_state = temp >> 7;
-    if (previous_state == 1) temp |= 0x80;
-    else temp &= 0x7F;
-    registers1.flags->Z = temp == 0x00;
-    bus->write_cpu(address, &temp);
+    uint8_t temp = bus->read_v(address);
+    sra_r(&temp);
+    bus->write_v(address, temp);
 }
 
 bool Cpu::execute_add_r(uint8_t instruction) {

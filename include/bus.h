@@ -92,13 +92,25 @@ typedef struct timer{
     timer_tac_t timer_tac;
 } timer_t2;
 
+typedef struct stat{
+    uint8_t mode : 2;
+    uint8_t lyc_ly_flag : 1;
+    uint8_t hblank_stat_int : 1;
+    uint8_t vblank_stat_int : 1;
+    uint8_t oam_stat_interrupt : 1;
+    uint8_t lyc_ly_stat_interrupt : 1;
+    uint8_t x : 1;
+} stat_t;
+
 typedef struct PPURegisters{
     lcdc_t lcdc;
-    uint8_t lcds;
+    stat_t lcds;
     uint8_t scy;
     uint8_t scx;
     uint8_t ly;
     uint8_t lyc;
+    uint8_t *wy;
+    uint8_t *wx;
 } PPURegisters_t;
 
 typedef struct JoyPad{
@@ -110,16 +122,6 @@ typedef struct JoyPad{
     uint8_t action : 1;
     uint8_t x : 2;
 } JoyPad_t;
-
-typedef struct stat{
-    uint8_t mode : 2;
-    uint8_t lyc_ly_flag : 1;
-    uint8_t hblank_stat_int : 1;
-    uint8_t vblank_stat_int : 1;
-    uint8_t oam_stat_interrupt : 1;
-    uint8_t lyc_ly_stat_interrupt : 1;
-    uint8_t x : 1;
-} stat_t;
 
 class Bus{
 private:

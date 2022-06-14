@@ -12,6 +12,7 @@ Ppu::Ppu(Bus *bus1, SDL_Renderer *renderer1, Lcd *lcd1) {
     ticks = 0;
     state = OAMSearch;
     fetcher = new Fetcher((bus->ppu_registers->lcdc.bg_tile_map_area ? 0x9C00 : 0x9800), 0, bus);
+    window_fetcher = new WindowFetcher((bus->ppu_registers->lcdc.window_tile_map_area ? 0x9C00 : 0x9800), 0, bus);
     memset(oams, 0xFF, sizeof(oams));
 }
 
@@ -24,15 +25,19 @@ void Ppu::tick() {
     switch (state) {
         case OAMSearch:
             oamfetch();
+            bus->lcd_status->mode = 0x02;
             break;
         case PixelTransfer:
             pixeltransfer();
+            bus->lcd_status->mode = 0x03;
             break;
         case HBlank:
             hblank();
+            bus->lcd_status->mode = 0x00;
             break;
         case VBlank:
             vblank();
+            bus->lcd_status->mode = 0x01;
             break;
         default:
             exit(6);
@@ -48,12 +53,15 @@ void Ppu::oamfetch() {
         auto tileMapRowAddr = (bus->ppu_registers->lcdc.bg_tile_map_area ? 0x9C00 : 0x9800) + (bus->ppu_registers->ly / 8) * 32;
         fetcher->start(tileMapRowAddr, tileLine);
 
+        tileMapRowAddr = (bus->ppu_registers->lcdc.window_tile_map_area ? 0x9C00 : 0x9800) + (bus->ppu_registers->ly / 8) * 32;
+        window_fetcher->start(tileMapRowAddr, tileLine);
+
         x_shift = bus->ppu_registers->scx % 8;
         y_shift = bus->ppu_registers->scy % 8;
 
         uint8_t count = 0;
         for(int i = 0; i < 40; i++){
-            if((uint8_t)(bus->ppu_registers->ly - (bus->sprites[i]->position_y - 16)) < (bus->ppu_registers->lcdc.obj_size ? 16 : 8)){
+            if((uint8_t)(bus->ppu_registers->ly - y_shift - (bus->sprites[i]->position_y - 16)) < (bus->ppu_registers->lcdc.obj_size ? 16 : 8)){
                 oams[i] = *bus->sprites[i];
                 oams[i].position_x -= 8;
                 if(count++ >= 10) break;
@@ -65,7 +73,7 @@ void Ppu::oamfetch() {
 
 void Ppu::pixeltransfer() {
     fetcher->tick();
-    uint8_t pixel, sprite_pixel;
+    uint8_t pixel, window_pixel, sprite_pixel;
     oam_t oam;
     if (!fetcher->fifo_bg.empty()) {
         pixel = fetcher->fifo_bg.front();
@@ -73,6 +81,7 @@ void Ppu::pixeltransfer() {
 
         bool bg_priority = true;
         x -= x_shift;
+        bus->ppu_registers->ly -= y_shift;
         for(int i = 0; i < 40; i++){
             oam = oams[i];
             if((uint8_t)(x - oam.position_x) < 8 && !oam.priority && bus->ppu_registers->lcdc.obj_enable){
@@ -102,10 +111,25 @@ void Ppu::pixeltransfer() {
             }
         }
         x += x_shift;
-        if(x >= x_shift && bus->ppu_registers->ly >= y_shift && bg_priority) lcd->write_pixel(x - x_shift, bus->ppu_registers->ly, pixel);
+        bus->ppu_registers->ly += y_shift;
+        if(x >= x_shift && bus->ppu_registers->ly >= y_shift && bus->ppu_registers->lcdc.bg_window_enable && bg_priority) lcd->write_pixel(x - x_shift, bus->ppu_registers->ly - y_shift, pixel);
+
+        if(bus->ppu_registers->lcdc.window_enable &&
+                bus->read_v(0xFF4A) >= bus->ppu_registers->ly &&
+                bus->read_v(0xFF4B) >= x){
+            window_fetcher->tick();
+            if (!window_fetcher->fifo_bg.empty()) {
+                window_pixel = window_fetcher->fifo_bg.front();
+                window_fetcher->fifo_bg.pop();
+                if(x >= x_shift && bus->ppu_registers->ly >= y_shift && bus->ppu_registers->lcdc.bg_window_enable && bus->ppu_registers->lcdc.window_enable && bg_priority) lcd->write_pixel(x - x_shift, bus->ppu_registers->ly - y_shift, window_pixel);
+            }
+        }
         x++;
     }
     if (x == 160 + x_shift) {
+        if(bus->lcd_status->hblank_stat_int){
+            bus->interrupt_request->lcd_stat = 1;
+        }
         state = HBlank;
         x = 0;
     }
@@ -120,20 +144,29 @@ void Ppu::hblank() {
         bus->ppu_registers->ly++;
         if (bus->ppu_registers->ly == bus->ppu_registers->lyc) {
             bus->interrupt_request->lcd_stat = 1;
+            bus->lcd_status->lyc_ly_flag = 1;
+        } else{
+            bus->lcd_status->lyc_ly_flag = 0;
         }
+
         if (bus->ppu_registers->ly == 144) {
             state = VBlank;
             lcd->render = true;
             bus->interrupt_request->vblank = 1;
+            if(bus->lcd_status->vblank_stat_int){
+                bus->interrupt_request->lcd_stat = 1;
+            }
         } else {
             state = OAMSearch;
+            if(bus->lcd_status->oam_stat_interrupt){
+                bus->interrupt_request->lcd_stat = 1;
+            }
             memset(oams, 0xDF, sizeof(oams));
         }
 
     }
 
 }
-
 
 void Ppu::vblank() {
     if (ticks == 456) {
@@ -142,6 +175,9 @@ void Ppu::vblank() {
         if (bus->ppu_registers->ly == 153) {
             bus->ppu_registers->ly = 0;
             state = OAMSearch;
+            if(bus->lcd_status->oam_stat_interrupt){
+                bus->interrupt_request->lcd_stat = 1;
+            }
             memset(oams, 0xDF, sizeof(oams));
         }
     }

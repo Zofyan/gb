@@ -38,6 +38,8 @@ Bus::Bus() {
     memset(&joypad_real2, 0xFF, 1);
 
     ppu_registers = (PPURegisters_t *) &io_registers[0x40];
+    ppu_registers->wy = &io_registers[0x4A];
+    ppu_registers->wx = &io_registers[0x4B];
     lcd_status = (stat_t *) &io_registers[0x41];
     pthread_mutex_init(&lock, NULL);
 
@@ -186,6 +188,9 @@ void Bus::write_io_registers(uint16_t address, uint8_t *buffer) {
     }
     if(address == 0xFF00){
         (*buffer) = ((*buffer) & 0xF0) | ((*(uint8_t*)joypad) & 0x0F);
+    }
+    if(address == 0xFF41){
+        (*buffer) = ((*buffer) & 0b11111000) | (read_v(0xFF41) & 0x03);
     }
     memcpy(&io_registers[address - IO_REGISTERS], buffer, 1);
     if(address == 0xFF46){

@@ -2,22 +2,15 @@
 // Created by Sofyan Aarrass on 07/06/2022.
 //
 
-#ifndef GB_FETCHER_H
-#define GB_FETCHER_H
+#ifndef GB_WINDOW_FETCHER_H
+#define GB_WINDOW_FETCHER_H
 
 #include <cstdint>
 #include <queue>
 #include "bus.h"
+#include "fetcher.h"
 
-enum FetcherState {
-    ReadTileData0,
-    ReadTileData1,
-    PushToFIFO,
-    ReadTileID,
-    Sleep
-};
-
-class Fetcher {
+class WindowFetcher {
 private:
     Bus *bus;
     std::queue<oam_t> oams;
@@ -32,7 +25,7 @@ public:
 
     std::queue<uint8_t> fifo_bg;
     std::queue<uint8_t> fifo_sprite;
-    Fetcher(uint16_t mapAddr1, uint8_t tileLine1, Bus *bus1);
+    WindowFetcher(uint16_t mapAddr1, uint8_t tileLine1, Bus *bus1);
     uint16_t tileLine;
 
     void start(uint16_t mapAddr, uint8_t tileLine);

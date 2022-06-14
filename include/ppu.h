@@ -6,6 +6,7 @@
 #include "bus.h"
 #include "fetcher.h"
 #include "lcd.h"
+#include "window_fetcher.h"
 
 #define LY 0xFF44
 #define LYC 0xFF45
@@ -29,6 +30,7 @@ private:
     uint16_t ticks;
     oam_t oams[40];
     Fetcher *fetcher;
+    WindowFetcher *window_fetcher;
     SDL_Renderer *renderer;
 
     void find_oams();

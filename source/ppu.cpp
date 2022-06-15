@@ -129,26 +129,30 @@ void Ppu::pixeltransfer() {
     fetcher->tick();
     uint8_t pixel, window_pixel;
     bool bg_priority;
-    y_shift = bus->ppu_registers->scy % 8;
 
     if (!fetcher->fifo_bg.empty()) {
         pixel = fetcher->fifo_bg.front();
         fetcher->fifo_bg.pop();
 
+        x -= x_shift; bus->ppu_registers->ly -= y_shift;
         bg_priority = oamtransfer();
 
-        if(x >= 0 && bus->ppu_registers->ly >= 0 && bg_priority) lcd->write_pixel(x, bus->ppu_registers->ly, pixel);
+        if(x >= x_shift && bus->ppu_registers->ly >= y_shift) {
+            if (bg_priority) lcd->write_pixel(x, bus->ppu_registers->ly, pixel);
 
-        uint8_t wy = bus->read_v(0xFF4A);
-        uint8_t wx = bus->read_v(0xFF4B);
-        if(bus->ppu_registers->lcdc.window_enable && wy <= bus->ppu_registers->ly && wx <= x + 7){
-            window_fetcher->tick();
-            if (!window_fetcher->fifo_bg.empty()) {
-                window_pixel = window_fetcher->fifo_bg.front();
-                window_fetcher->fifo_bg.pop();
-                if(draw_window(bus) && bg_priority) lcd->write_pixel(x, bus->ppu_registers->ly, window_pixel);
+
+            uint8_t wy = bus->read_v(0xFF4A);
+            uint8_t wx = bus->read_v(0xFF4B);
+            if (bus->ppu_registers->lcdc.window_enable && wy <= bus->ppu_registers->ly && wx - 7 <= x) {
+                window_fetcher->tick();
+                if (!window_fetcher->fifo_bg.empty()) {
+                    window_pixel = window_fetcher->fifo_bg.front();
+                    window_fetcher->fifo_bg.pop();
+                    if (draw_window(bus) && bg_priority) lcd->write_pixel(x, bus->ppu_registers->ly, window_pixel);
+                }
             }
         }
+        x += x_shift; bus->ppu_registers->ly += y_shift;
         x++;
     }
 }

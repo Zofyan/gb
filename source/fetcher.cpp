@@ -83,7 +83,7 @@ void Fetcher::readtileid() {
 
 void Fetcher::start(uint16_t mapAddr1, uint8_t tileLine1) {
     tileIndex = bus->ppu_registers->scx / 8;
-    lineIndex = bus->ppu_registers->scy / 8;
+    lineIndex = (bus->ppu_registers->scy / 8  + bus->ppu_registers->ly / 8) % 32;
     mapAddr = mapAddr1;
     tileLine = tileLine1;
     state = ReadTileID;

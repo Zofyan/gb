@@ -30,6 +30,7 @@ private:
     uint16_t ticks;
     oam_t oams[40];
     Fetcher *fetcher;
+    uint16_t ticks_pixeltransfer;
     WindowFetcher *window_fetcher;
     SDL_Renderer *renderer;
 
@@ -50,6 +51,7 @@ public:
 
     void draw_line();
 
+    uint8_t oamtransfer();
 };
 
 

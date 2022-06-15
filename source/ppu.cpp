@@ -50,10 +50,10 @@ void Ppu::oamfetch() {
         ticks = 0;
 
         auto tileLine = bus->ppu_registers->ly % 8;
-        auto tileMapRowAddr = (bus->ppu_registers->lcdc.bg_tile_map_area ? 0x9C00 : 0x9800) + (bus->ppu_registers->ly / 8) * 32;
+        auto tileMapRowAddr = (bus->ppu_registers->lcdc.bg_tile_map_area ? 0x9C00 : 0x9800);
         fetcher->start(tileMapRowAddr, tileLine);
 
-        tileMapRowAddr = (bus->ppu_registers->lcdc.window_tile_map_area ? 0x9C00 : 0x9800) + (bus->ppu_registers->ly / 8) * 32;
+        tileMapRowAddr = (bus->ppu_registers->lcdc.window_tile_map_area ? 0x9C00 : 0x9800) + uint8_t((bus->ppu_registers->ly - bus->read_v(0xFF4A)) / 8) * 32;
         window_fetcher->start(tileMapRowAddr, tileLine);
 
         x_shift = bus->ppu_registers->scx % 8;
@@ -70,58 +70,75 @@ void Ppu::oamfetch() {
     }
 }
 
+uint8_t Ppu::oamtransfer(){
+    oam_t oam;
+    uint8_t sprite_pixel;
+    bool bg_priority = true;
+    for(int i = 0; i < 40; i++){
+        oam = oams[i];
+        if((uint8_t)(x - oam.position_x) < 8 && !oam.priority && bus->ppu_registers->lcdc.obj_enable){
+            uint16_t offset;
+            offset = 0x8000;
+            if(bus->ppu_registers->lcdc.obj_size) {
+                if(oam.flip_y) offset += ((oam.tile_index | 0x01) * 16);
+                else offset += ((oam.tile_index & 0xFE) * 16);
+            }
+            else {
+                offset += ((uint8_t)oam.tile_index * 16);
+            }
+
+            uint16_t addr = offset;
+            if(oam.flip_y) addr += (( 8 - (bus->ppu_registers->ly + 16 - oam.position_y)) * 2);
+            else addr += ((bus->ppu_registers->ly + 16 - oam.position_y) * 2);
+
+            uint8_t bit_shift = 7 - (x - oam.position_x);
+            if(oam.flip_x) bit_shift = x - oam.position_x;
+
+            uint8_t data = bus->read_v(addr);
+            sprite_pixel = ((data >> bit_shift) & 0x1);
+            data = bus->read_v(addr + 1);
+            sprite_pixel |= ((data >> bit_shift) & 0x1) << 1;
+            lcd->write_pixel(x, bus->ppu_registers->ly, sprite_pixel, oam.palette, true);
+            if(sprite_pixel) bg_priority = oam.priority;
+            //ticks_pixeltransfer += 11 - (uint8_t)fmin(5, (x + bus->ppu_registers->scx) % 8);
+        }
+    }
+    return bg_priority;
+}
+
+bool draw_window(Bus *bus){
+    return
+    bus->ppu_registers->lcdc.bg_window_enable &&
+    bus->ppu_registers->lcdc.window_enable;
+}
 
 void Ppu::pixeltransfer() {
     fetcher->tick();
-    uint8_t pixel, window_pixel, sprite_pixel;
-    oam_t oam;
-    if (!fetcher->fifo_bg.empty()) {
+    uint8_t pixel, window_pixel;
+    bool bg_priority = true;
+
+    if (!fetcher->fifo_bg.empty() && bus->ppu_registers->lcdc.bg_window_enable) {
         pixel = fetcher->fifo_bg.front();
         fetcher->fifo_bg.pop();
 
-        bool bg_priority = true;
         x -= x_shift;
         bus->ppu_registers->ly -= y_shift;
-        for(int i = 0; i < 40; i++){
-            oam = oams[i];
-            if((uint8_t)(x - oam.position_x) < 8 && !oam.priority && bus->ppu_registers->lcdc.obj_enable){
-                uint16_t offset;
-                offset = 0x8000;
-                if(bus->ppu_registers->lcdc.obj_size) {
-                    if(oam.flip_y) offset += ((oam.tile_index | 0x01) * 16);
-                    else offset += ((oam.tile_index & 0xFE) * 16);
-                }
-                else {
-                    offset += ((uint8_t)oam.tile_index * 16);
-                }
 
-                uint16_t addr = offset;
-                if(oam.flip_y) addr += (( 8 - (bus->ppu_registers->ly + 16 - oam.position_y)) * 2);
-                else addr += ((bus->ppu_registers->ly + 16 - oam.position_y) * 2);
+        bg_priority = oamtransfer();
 
-                uint8_t bit_shift = 7 - (x - oam.position_x);
-                if(oam.flip_x) bit_shift = x - oam.position_x;
-
-                uint8_t data = bus->read_v(addr);
-                sprite_pixel = ((data >> bit_shift) & 0x1);
-                data = bus->read_v(addr + 1);
-                sprite_pixel |= ((data >> bit_shift) & 0x1) << 1;
-                lcd->write_pixel(x, bus->ppu_registers->ly, sprite_pixel, oam.palette, true);
-                if(sprite_pixel) bg_priority = oam.priority;
-            }
-        }
         x += x_shift;
         bus->ppu_registers->ly += y_shift;
-        if(x >= x_shift && bus->ppu_registers->ly >= y_shift && bus->ppu_registers->lcdc.bg_window_enable && bg_priority) lcd->write_pixel(x - x_shift, bus->ppu_registers->ly - y_shift, pixel);
+        if(x >= x_shift && bus->ppu_registers->ly >= y_shift && bg_priority) lcd->write_pixel(x - x_shift, bus->ppu_registers->ly - y_shift, pixel);
+
 
         if(bus->ppu_registers->lcdc.window_enable &&
-                bus->read_v(0xFF4A) >= bus->ppu_registers->ly &&
-                bus->read_v(0xFF4B) >= x){
+           bus->read_v(0xFF4A) <= bus->ppu_registers->ly &&
+           bus->read_v(0xFF4B) <= x + 7){
             window_fetcher->tick();
             if (!window_fetcher->fifo_bg.empty()) {
                 window_pixel = window_fetcher->fifo_bg.front();
                 window_fetcher->fifo_bg.pop();
-                if(x >= x_shift && bus->ppu_registers->ly >= y_shift && bus->ppu_registers->lcdc.bg_window_enable && bus->ppu_registers->lcdc.window_enable && bg_priority) lcd->write_pixel(x - x_shift, bus->ppu_registers->ly - y_shift, window_pixel);
+                if(draw_window(bus) && bg_priority) lcd->write_pixel(x - bus->read_v(0xFF4B) % 8, bus->ppu_registers->ly - bus->read_v(0xFF4A) % 8, window_pixel);
             }
         }
         x++;

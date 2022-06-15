@@ -4,7 +4,9 @@
 
 #include <cstdlib>
 #include <cstring>
+#include "../include/fetcher.h"
 #include "../include/window_fetcher.h"
+#include "../include/bus.h"
 
 WindowFetcher::WindowFetcher(uint16_t mapAddr1, uint8_t tileLine1, Bus *bus1) {
     bus = bus1;
@@ -17,7 +19,6 @@ WindowFetcher::WindowFetcher(uint16_t mapAddr1, uint8_t tileLine1, Bus *bus1) {
 
 void WindowFetcher::tick() {
     ticks++;
-    if(ticks < 2) return;
     ticks = 0;
 
     switch (state) {
@@ -69,20 +70,19 @@ void WindowFetcher::pushtofifo() {
         }
         // Advance to the next tile in the map's row.
         tileIndex++;
-        tileIndex = tileIndex % 32;
+        tileIndex = (tileIndex % 32) % 20;
         state = ReadTileID;
     }
 }
 
 void WindowFetcher::readtileid() {
-    tileID = bus->read_v(mapAddr + tileIndex + lineIndex * 32);
+    tileID = bus->read_v(mapAddr + tileIndex);
     memset(pixelData, 0, 8);
     state = ReadTileData0;
 }
 
 void WindowFetcher::start(uint16_t mapAddr1, uint8_t tileLine1) {
-    tileIndex = bus->ppu_registers->scx / 8;
-    lineIndex = bus->ppu_registers->scy / 8;
+    tileIndex = 0;
     mapAddr = mapAddr1;
     tileLine = tileLine1;
     state = ReadTileID;

@@ -26,8 +26,8 @@ class Loader {
         //char filename[100] = "../Tennis (JUE) [!].gb";
         //char filename[100] = "../Dr. Mario (World).gb";
         //char filename[100] = "../Super Mario Land (World).gb";
-        char filename[100] = "../Kirby's Dream Land (USA, Europe).gb";
-        //char filename[100] = "../Pokemon Red.gb";
+        //char filename[100] = "../Kirby's Dream Land (USA, Europe).gb";
+        char filename[100] = "../Pokemon Red.gb";
 
         Loader(Bus *bus);
 };

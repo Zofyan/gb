@@ -29,6 +29,7 @@ private:
     uint16_t y = 0;
     uint16_t ticks;
     oam_t oams[40];
+    bool oams_selection[40];
     Fetcher *fetcher;
     uint16_t ticks_pixeltransfer;
     WindowFetcher *window_fetcher;

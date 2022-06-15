@@ -19,6 +19,7 @@ WindowFetcher::WindowFetcher(uint16_t mapAddr1, uint8_t tileLine1, Bus *bus1) {
 
 void WindowFetcher::tick() {
     ticks++;
+    //if(ticks < 2) return;
     ticks = 0;
 
     switch (state) {

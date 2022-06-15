@@ -82,14 +82,14 @@ void Bus::write(uint16_t address, uint8_t *buffer) {
         if(mbc == MBC1) {
             (*buffer) &= 0x03;
             if (ram_size == size_32KiB) {
-                eram = erams[(*buffer)];
+                eram = erams[*buffer];
             }
-            else if (rom_size >= size_1MiB) rom_number = (rom_number & 0b10011111) | ((*buffer) << 5);
+            if (rom_size >= size_1MiB) rom_number = (rom_number & 0b10011111) | ((*buffer) << 5);
         }
         if(mbc == MBC3) {
             if((*buffer) <= 0x03){
                 (*buffer) &= 0x03;
-                eram = erams[(*buffer)];
+                eram = erams[*buffer];
             }
         }
     }

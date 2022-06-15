@@ -79,17 +79,16 @@ void Cpu::cycles(uint8_t cycles) {
         }
         cycles_done++;
         if(cycles_done >= 17556){
+            count++;
+            if(count == 60) count = 0;
             timeval curTime{};
             gettimeofday(&curTime, NULL);
             auto end = curTime.tv_usec / 1000;
             if(4 > (end - start)){
-                //printf("frame don, sleeping for %lu\n", 16 - (end - start));
                 std::this_thread::sleep_for(std::chrono::milliseconds(4 - (end - start)));
             }
             cycles_done = 0;
             start = curTime.tv_usec / 1000;
-            count++;
-            if(count == 60) count = 0;
         }
     }
 }

@@ -25,8 +25,8 @@ private:
     SDL_Window *window;
     Bus *bus;
     PPUState state;
-    uint16_t x = 0;
-    uint16_t y = 0;
+    int16_t x = 0;
+    int16_t y = 0;
     uint16_t ticks;
     oam_t oams[40];
     bool oams_selection[40];
@@ -50,9 +50,7 @@ public:
     void hblank();
     void vblank();
 
-    void draw_line();
-
-    uint8_t oamtransfer();
+    uint8_t oamtransfer(bool bg_transparant = false);
 };
 
 

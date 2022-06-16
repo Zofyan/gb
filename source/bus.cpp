@@ -47,7 +47,7 @@ Bus::Bus() {
         sprites[i] = (oam_t *)(&oam[i * 4]);
     }
 
-    memset(pixels, 0, 144 * 160);
+    memset(bg_window_pixels, 0, 144 * 160);
 }
 
 void Bus::read(uint16_t address, uint8_t *buffer) {

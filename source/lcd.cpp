@@ -19,13 +19,23 @@ Lcd::Lcd(uint16_t width1, uint16_t height1, SDL_Renderer *renderer1, Bus *bus1) 
     colors2[3] = rgba{40, 50, 200};
 }
 
-void Lcd::write_pixel(uint16_t x, uint16_t y, uint8_t color, uint8_t palette, bool sprite) {
-    auto colors = palette ? colors1 : colors1;
+void Lcd::write_pixel(uint16_t x, uint16_t y, uint8_t color) {
+    auto colors = colors1;
     if(x >= 160 || y >= 144) return;
-    if(sprite && color == 0) return;
 
-    bus->pixels[((160 * y + x) * 4) + 3] = colors[color].blue;
-    bus->pixels[((160 * y + x) * 4) + 2] = colors[color].green;
-    bus->pixels[((160 * y + x) * 4) + 1] = colors[color].red;
-    bus->pixels[((160 * y + x) * 4) + 0] = 0xFF;
+    bus->bg_window_pixels[((160 * y + x) * 4) + 3] = colors[color].blue;
+    bus->bg_window_pixels[((160 * y + x) * 4) + 2] = colors[color].green;
+    bus->bg_window_pixels[((160 * y + x) * 4) + 1] = colors[color].red;
+    bus->bg_window_pixels[((160 * y + x) * 4) + 0] = 0xFF;
+}
+
+void Lcd::write_sprite_pixel(uint16_t x, uint16_t y, uint8_t color, uint8_t palette) {
+    auto colors = palette ? colors2 : colors1;
+    if(x >= 160 || y >= 144) return;
+    if(color == 0) return;
+
+    bus->bg_window_pixels[((160 * y + x) * 4) + 3] = colors[color].blue;
+    bus->bg_window_pixels[((160 * y + x) * 4) + 2] = colors[color].green;
+    bus->bg_window_pixels[((160 * y + x) * 4) + 1] = colors[color].red;
+    bus->bg_window_pixels[((160 * y + x) * 4) + 0] = 0xFF;
 }

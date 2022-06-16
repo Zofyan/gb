@@ -168,7 +168,7 @@ int main() {
 
             oldFrame = cpu.count;
 
-            SDL_UpdateTexture(texture, nullptr, bus.pixels, 160 * 4);
+            SDL_UpdateTexture(texture, nullptr, bus.bg_window_pixels, 160 * 4);
             SDL_RenderCopy(renderer, texture, nullptr, nullptr);
             SDL_RenderPresent(renderer);
             lcd.render = false;

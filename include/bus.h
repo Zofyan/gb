@@ -184,7 +184,8 @@ public:
     stat_t *lcd_status;
     JoyPad_t *joypad;
     JoyPad_t joypad_real1, joypad_real2;
-    uint8_t pixels[144 * 160 * 4];
+    uint8_t bg_window_pixels[144 * 160 * 4];
+    uint8_t sprite_pixels[144 * 160 * 4];
     pthread_mutex_t lock;
 
     oam_t *sprites[40];

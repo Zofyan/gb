@@ -71,7 +71,7 @@ void WindowFetcher::pushtofifo() {
         }
         // Advance to the next tile in the map's row.
         tileIndex++;
-        tileIndex = (tileIndex % 32) % 20;
+        tileIndex = (tileIndex % 32);
         state = ReadTileID;
     }
 }

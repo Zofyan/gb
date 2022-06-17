@@ -9,6 +9,7 @@
 #include "pthread.h"
 #include "../include/logger.h"
 #include "../include/lcd.h"
+#include "../include/savestate.h"
 
 #define SCALE 4
 
@@ -18,7 +19,7 @@ void *cpu_thread(void *arg) {
     uint8_t temp;
     Logger logger(&cpu->registers1, cpu, true);
     //logger.print_instruction();
-    while (cpu->execute_next_instruction()) {
+    while (cpu->execute()) {
         //logger.print_instruction();
         cpu->bus->read(SERIAL_SC, &temp);
         if (temp == 0x81) {
@@ -59,7 +60,7 @@ void debug_tiledata(SDL_Renderer *renderer, Bus *bus) {
     SDL_RenderPresent(renderer);
 }
 
-int main() {
+int main(int argc, char **argv) {
     std::cout << "Hello, World!" << std::endl;
 
     pthread_t pthread;
@@ -73,9 +74,10 @@ int main() {
     Cpu cpu(&bus, &ppu);
     Logger logger(&cpu.registers1, &cpu, false);
 
-    FILE *openlog;
-    //openlog = fopen("../temp_log.txt", "w");
-
+    SaveState saver(&cpu);
+    if(argc == 2){
+        saver.load(argv[1]);
+    }
 
     pthread_create(&pthread, NULL, cpu_thread, &cpu);
 
@@ -88,8 +90,6 @@ int main() {
 
     SDL_Init(SDL_INIT_VIDEO);
     SDL_CreateWindowAndRenderer(160 * SCALE, 144 * SCALE, 0, &window, &renderer);
-    //SDL_CreateWindowAndRenderer(9 * 20 * 3, 9 * 20 * 3, 0, &window1, &renderer1);
-    //SDL_CreateWindowAndRenderer(256 * SCALE, 512 * SCALE, 0, &window2, &renderer2);
     SDL_SetRenderDrawColor(renderer, 0, 0, 0, 0);
     SDL_RenderClear(renderer);
     SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);
@@ -101,9 +101,8 @@ int main() {
     SDL_SetRenderDrawColor(renderer1, 255, 0, 0, 255);
 
 
-    bool quit = false, press = false;
+    bool quit = false, press;
     uint32_t oldFrame = 10000;
-    uint8_t color, lastColor = 0;
     while (!quit) {
         while (SDL_PollEvent(&event)) {
             press = true;
@@ -114,6 +113,9 @@ int main() {
                 press = true;
             }
             switch (event.key.keysym.sym) {
+                case SDLK_b:
+                    saver.save();
+                    break;
                 case SDLK_a:
                     bus.joypad_real1.left_b = press;
                     bus.interrupt_request->joypad = !press;
@@ -168,6 +170,10 @@ int main() {
 
             oldFrame = cpu.count;
 
+            for(int a = 0; a < sizeof(bus.sprite_pixels); a++){
+                if(bus.sprite_pixels[a]) bus.bg_window_pixels[a] = bus.sprite_pixels[a];
+                bus.sprite_pixels[a] = 0;
+            }
             SDL_UpdateTexture(texture, nullptr, bus.bg_window_pixels, 160 * 4);
             SDL_RenderCopy(renderer, texture, nullptr, nullptr);
             SDL_RenderPresent(renderer);

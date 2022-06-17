@@ -13,6 +13,6 @@ add_executable(gb source/main.cpp include/loader.h source/instructions.cpp
         source/bus.cpp include/bus.h include/logger.h source/logger.cpp
         source/ppu.cpp include/ppu.h source/lcd.cpp include/lcd.h
         source/fetcher.cpp include/fetcher.h source/loader.cpp source/window_fetcher.cpp
-        include/window_fetcher.h)
+        include/window_fetcher.h source/savestate.cpp include/savestate.h)
 
 target_link_libraries(gb ${SDL2_LIBRARIES})

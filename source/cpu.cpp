@@ -41,6 +41,7 @@ Cpu::Cpu(Bus *bus, Ppu *ppu) {
     (*registers1.HL) = 0x014D;
     this->bus = bus;
     this->ppu = ppu;
+    pthread_mutex_init(&lock, NULL);
 }
 
 void Cpu::cycles(uint8_t cycles) {
@@ -85,12 +86,19 @@ void Cpu::cycles(uint8_t cycles) {
             gettimeofday(&curTime, NULL);
             auto end = curTime.tv_usec / 1000;
             if(4 > (end - start)){
-                std::this_thread::sleep_for(std::chrono::milliseconds(4 - (end - start)));
+                //std::this_thread::sleep_for(std::chrono::milliseconds(4 - (end - start)));
             }
             cycles_done = 0;
             start = curTime.tv_usec / 1000;
         }
     }
+}
+
+bool Cpu::execute() {
+    pthread_mutex_lock(&lock);
+    bool temp = execute_next_instruction();
+    pthread_mutex_unlock(&lock);
+    return temp;
 }
 
 bool Cpu::execute_next_instruction() {

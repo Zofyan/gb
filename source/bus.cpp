@@ -10,21 +10,50 @@
 #include "../include/instructions.h"
 
 Bus::Bus() {
-    for(int i = 0; i < 256; i++){
-        roms[i] = (uint8_t*)calloc(ROM_N_END - ROM_N + 1, 1);
-        erams[i] = (uint8_t*)calloc(ERAM_END - ERAM + 1, 1);
+    int memory_size = 0;
+    memory_size += (ROM_N_END - ROM_N + 1) * 256;
+    memory_size += (ERAM_END - ERAM + 1) * 8;
+    memory_size += VRAM_END - VRAM + 1;
+    memory_size += WRAM_0_END - WRAM_0 + 1;
+    memory_size += WRAM_N_END - WRAM_N + 1;
+    memory_size += OAM_END - OAM + 1;
+    memory_size += IO_REGISTERS_END - IO_REGISTERS + 1;
+    memory_size += HRAM_END - HRAM + 1;
+    memory_size += 1;
+
+    memory = (uint8_t*)calloc(memory_size, 1);
+
+    uint8_t *current_pointer = memory;
+    for(auto & rom : roms){
+        rom = current_pointer;
+        current_pointer += (ROM_N_END - ROM_N + 1);
+    }
+    rom_0 = roms[0];
+
+    vram = current_pointer;
+    current_pointer += VRAM_END - VRAM + 1;
+
+    for(auto & eram1 : erams){
+        eram1 = current_pointer;
+        current_pointer += (ERAM_END - ERAM + 1);
     }
 
-    rom_0 = roms[0];
-    rom_n = roms[1];
-    vram = (uint8_t*)calloc(VRAM_END - VRAM + 1, 1);
-    eram = erams[0];
-    wram_0 = (uint8_t*)calloc(WRAM_0_END - WRAM_0 + 1, 1);
-    wram_n = (uint8_t*)calloc(WRAM_N_END - WRAM_N + 1, 1);
-    oam = (uint8_t*)calloc(OAM_END - OAM + 1, 1);
-    io_registers = (uint8_t*)calloc(IO_REGISTERS_END - IO_REGISTERS + 1, 1);
-    hram = (uint8_t*)calloc(HRAM_END - HRAM + 1, 1);
-    int_enable = (uint8_t*)calloc(INT_ENABLE_END - INT_ENABLE + 1, 1);
+    wram_0 = current_pointer;
+    current_pointer += WRAM_0_END - WRAM_0 + 1;
+    wram_n = current_pointer;
+    current_pointer += WRAM_N_END - WRAM_N + 1;
+
+    oam = current_pointer;
+    current_pointer += OAM_END - OAM + 1;
+
+    io_registers = current_pointer;
+    current_pointer += IO_REGISTERS_END - IO_REGISTERS + 1;
+
+    hram = current_pointer;
+    current_pointer += HRAM_END - HRAM + 1;
+
+    int_enable = current_pointer;
+    current_pointer += 1;
 
     interrupt_request = (interrupts_t *) ((uint8_t *) (io_registers + (INT_REQUEST & 0x00FF)));
     memset(interrupt_request, 0, 1);

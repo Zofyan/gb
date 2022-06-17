@@ -58,7 +58,6 @@ void Ppu::oamfetch() {
         window_fetcher->start(tileMapRowAddr, tileLine);
 
         x_shift = bus->ppu_registers->scx % 8;
-        y_shift = bus->ppu_registers->scy % 8;
 
         x = (int16_t) -x_shift;
 
@@ -106,7 +105,7 @@ uint8_t Ppu::oamtransfer(bool transparant_bg) {
             sprite_pixel = ((data >> bit_shift) & 0x1);
             data = bus->read_v(addr + 1);
             sprite_pixel |= ((data >> bit_shift) & 0x1) << 1;
-            if(oam.priority || transparant_bg) lcd->write_sprite_pixel(x, bus->ppu_registers->ly, sprite_pixel, oam.palette);
+            if(!oam.priority || transparant_bg) lcd->write_sprite_pixel(x, bus->ppu_registers->ly, sprite_pixel, oam.palette);
             //if (oam.priority) sprite_pixel = 0;
         }
     }
@@ -127,6 +126,7 @@ void Ppu::pixeltransfer() {
         }
         return;
     }
+    y_shift = bus->ppu_registers->scy % 8;
     fetcher->tick();
     uint8_t pixel = 0, window_pixel = 0;
 

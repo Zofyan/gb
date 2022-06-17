@@ -152,8 +152,10 @@ private:
     void write_hram(uint16_t address, uint8_t *buffer);
     void write_int_enable(uint16_t address, uint8_t *buffer);
 public:
+    uint8_t *memory;
+    uint32_t memory_size;
     uint8_t *roms[256];
-    uint8_t *erams[256];
+    uint8_t *erams[8];
     uint32_t rom_number = 1;
     uint32_t rom_size = 0;
     uint32_t ram_size = 0;

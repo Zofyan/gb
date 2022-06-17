@@ -165,8 +165,10 @@ public:
     Cpu(Bus *bus, Ppu *ppu);
     Bus *bus;
     Ppu *ppu;
+    pthread_mutex_t lock;
 
     bool execute_next_instruction();
+    bool execute();
 
 };
 
